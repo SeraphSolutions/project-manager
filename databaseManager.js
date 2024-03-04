@@ -18,6 +18,8 @@ async function createUser(username, password){
   return result;
 }
 
+
+
 //#endregion
 
 //#region Get user functions
