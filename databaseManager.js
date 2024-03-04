@@ -2,12 +2,23 @@ const mysql = require('mysql2');
 const dotenv = require('dotenv');
 dotenv.config();
 
+
+
 var pool = mysql.createPool({
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DATABASE
 }).promise();
+
+//#region Post user functions
+
+async function createUser(username, password){
+  const [result] = await pool.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, password]);
+  return result;
+}
+
+//#endregion
 
 //#region Get user functions
 
@@ -41,4 +52,4 @@ async function getTaskByUserId(id){
 
 module.exports = {
   getUsers, getUserById, getUserId,
-  getTaskByUserId}
+  getTaskByUserId, createUser}

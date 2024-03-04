@@ -25,3 +25,9 @@ app.listen(PORT, function(err){
   if (err) console.log("Error in server setup")
   console.log("Server listening on Port", PORT);
 })
+
+app.post('/user/new_user', async (req, res)=>{
+  const {username, password} = req.body;
+  var result = dbManager.createUser(username, password);
+  res.json(result);
+})
