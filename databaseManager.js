@@ -27,7 +27,13 @@ async function newUser(username, password) {
   }
 }
 
-
+async function newTask(userId, taskName, taskDescription, parentTask = null){
+  if(parentTask){
+    //Don't add to assigned tasks, use parent task.
+  }else{
+    //New task tree, insert into assigned tasks with userId.
+  }
+}
 
 //#endregion
 
@@ -60,6 +66,7 @@ async function getTaskByUserId(userId) {
 }
 
 async function getSubtasks(taskId, taskStack=[]){
+  //Level order traversal of task tree using a recursive function.
   const [directSubtasks] = await pool.query('SELECT taskId FROM Task WHERE parentTask=' + taskId);
   if(directSubtasks.length > 0){
     taskStack.push(directSubtasks);
