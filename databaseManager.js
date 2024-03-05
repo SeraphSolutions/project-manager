@@ -1,5 +1,6 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
+const tokenManager = require('./tokenManager')
 dotenv.config();
 
 
@@ -40,11 +41,13 @@ async function getUsers() {
 
 async function getUserById(id) {
   const [result] = await pool.query('SELECT * FROM User WHERE userId=' + id);
+  const [result] = await pool.query('SELECT * FROM User WHERE userId=?',[id]);
   return result;
 }
 
 async function getUserId(username) {
   const [result] = await pool.query('SELECT * FROM User WHERE username=' + username);
+  const [result] = await pool.query('SELECT * FROM User WHERE username=?',[username]);
   return result;
 }
 
