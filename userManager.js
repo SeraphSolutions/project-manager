@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const dbManager = require('./databaseManager');
+const tokenManager = require('./tokenManager')
 
 const saltRounds = 10;
 
@@ -40,22 +41,25 @@ async function loginUser(username, password) {
             throw new Error("Invalid input. Please enter username and password");
         }
 
-        const userId = await dbManager.getUserId(username);
+        const user = await dbManager.getUserId(username);
 
-        if (!userId) {
+        if (!user) {
             throw new Error("User not found");
         }
 
-        const storedUserData = dbManager.getUserById(userId);
+        
 
-        const passwordMatch = await bcrypt.compare(password, storedUserData.password);
+        const passwordMatch = await bcrypt.compare(password, user[0]["password"]);
 
         if (!passwordMatch) {
             await new Promise(resolve => setTimeout(resolve, 3000));
             throw new Error("Incorrect password");
         }
 
-        return storedUserData;
+
+        token = tokenManager.generateToken(user[0].userId);
+
+        return token;
     } catch(error) {
 
         console.error("Error in login. ", error.message);

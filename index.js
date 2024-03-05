@@ -2,6 +2,7 @@ const express = require('express');
 const app = express();
 const dbManager = require('./databaseManager')
 const usManager = require('./userManager')
+const tokenManager = require('./tokenManager')
 const PORT = 8080;
 
 app.use(express.json());
@@ -40,5 +41,7 @@ app.post('/user/new_user', async (req, res)=>{
 app.post('/user/login', async (req, res)=>{
   const {username, password} = req.body;
   var result = usManager.loginUser(username, password);
+  var result = await usManager.loginUser(username, password);
+  console.log(result)
   res.json(result)
 })
