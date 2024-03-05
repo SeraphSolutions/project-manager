@@ -4,6 +4,8 @@ const dbManager = require('./databaseManager')
 const usManager = require('./userManager')
 const PORT = 8080;
 
+app.use(express.json());
+
 app.get('/user', (req, res)=>{
   var result = dbManager.getUsers().then(result => {
     res.json(result);
@@ -29,7 +31,9 @@ app.listen(PORT, function(err){
 
 app.post('/user/new_user', async (req, res)=>{
   const {username, password} = req.body;
-  var result = dbManager.createUser(username, password);
+  console.log(req)
+  console.log(username, password)
+  const result = await usManager.createUser(username, password);
   res.json(result);
 })
 

@@ -7,17 +7,19 @@ const saltRounds = 10;
 
 async function createUser(username, password) {
     try {
+
+        console.log(username, password)
         // validate data
         if (!username || !password){
             throw new Error("Invalid input. Please enter username and password");
         }
 
         //hash password with bcrypt
-        const hasedPassword = await bcrypt.hash(passwordq, saltRounds);
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
 
 
         //UPDATE: using correct cols for database
-        const result = await dbManager.createUser(username, hasedPassword);
+        const result = await dbManager.newUser(username, hashedPassword);
 
 
         //return created user
