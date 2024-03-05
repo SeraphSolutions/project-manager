@@ -14,7 +14,7 @@ var pool = mysql.createPool({
 //#region Post user functions
 
 async function createUser(username, password){
-  const [result] = await pool.query('INSERT INTO user (username, password) VALUES (?, ?)', [username, password]);
+  const [result] = await pool.query('INSERT INTO User (username, password) VALUES (?, ?)', [username, password]);
   return result;
 }
 
