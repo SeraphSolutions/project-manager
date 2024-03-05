@@ -8,20 +8,14 @@ const PORT = 8080;
 app.use(express.json());
 
 app.get('/user', (req, res)=>{
-  var result = dbManager.getUsers().then(result => {
-    res.json(result);
   });
 })
 
 app.get('/user/id/:id', (req, res)=>{
-  var result = dbManager.getUserById(req.params.id).then(result => {
-    res.json(result);
   });
 })
 
 app.get('/user/tasks/userId/:id', (req, res)=>{
-  var result = dbManager.getTaskByUserId(req.params.id).then(result => {
-    res.json(result);
   });
 })
 
