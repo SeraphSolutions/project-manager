@@ -11,6 +11,9 @@ var pool = mysql.createPool({
   database: process.env.MYSQL_DATABASE
 }).promise();
 
+//#region Utility Functions
+//#endregion
+
 //#region Post user functions
 
 async function newUser(username, password) {
@@ -49,16 +52,28 @@ async function getUserId(username) {
 
 //#region Get tasks functions
 
-async function getTaskByUserId(id) {
-  const [taskIds] = await pool.query('SELECT taskId FROM assignedTasks WHERE userId=' + id);
+async function getTaskByUserId(userId) {
+  const [taskIds] = await pool.query('SELECT taskId FROM assignedTasks WHERE userId=' + userId);
   const taskIdsArray = taskIds.map((current) => { return current.taskId; });
   const [task] = await pool.query('SELECT * FROM task WHERE taskId IN (' + pool.escape(taskIdsArray) + ')');
   return task;
+}
+
+async function getSubtasks(taskId, taskStack=[]){
+  const [directSubtasks] = await pool.query('SELECT taskId FROM Task WHERE parentTask=' + taskId);
+  if(directSubtasks.length > 0){
+    taskStack.push(directSubtasks);
+    for (const task of directSubtasks) {
+      await getSubtasks(task.taskId, taskStack);
+    }
+    await directSubtasks.forEach(task => getSubtasks(task.taskId, taskStack));
+  }
+  return taskStack;
 }
 
 //#endregion
 
 module.exports = {
   getUsers, getUserById, getUserId,
-  getTaskByUserId, newUser,
+  getTaskByUserId, newUser, getSubtasks
 }
