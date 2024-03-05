@@ -10,15 +10,6 @@ function generateToken(userId) {
     return token;
 }
 
-function verifyToken(token) {
-    try {
-        const decoded = jwt.verify(token, key);
-        return decoded;
-    } catch (error){
-        throw new Error('Invalid token')
-    }
-}
-
 module.exports = {
-    generateToken, verifyToken,
+    generateToken, 
 }

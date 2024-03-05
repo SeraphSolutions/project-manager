@@ -2,50 +2,28 @@ const express = require('express');
 const app = express();
 const dbManager = require('./databaseManager')
 const usManager = require('./userManager')
-const tokenManager = require('./tokenManager')
+const auth = require('./middleware/tokenAuth')
 const PORT = 8080;
 
 app.use(express.json());
 
-app.get('/user', (req, res)=>{
-    var result = dbManager.getUsers().then(result => {
-    const {token} = req.body
-    try {
-      tokenManager.verifyToken(token)
-      res.json(result);
-    } catch (error) {
-      return res.status(401).json({
-        message:"unauthorized"
-      })
-    }
+//endpoint format: app.TYPE(route, auth(optional if protected), arrow func)
+
+app.get('/user', auth, (req, res)=>{
+  var result = dbManager.getUsers().then(result => {
+    res.json(result);
   });
 })
 
-app.get('/user/id/:id', (req, res)=>{
-    var result = dbManager.getUserById(req.params.id).then(result => {
-    const {token} = req.body
-    try {
-      tokenManager.verifyToken(token)
-      res.json(result);
-    } catch (error) {
-      return res.status(401).json({
-        message:"unauthorized"
-      })
-    }
+app.get('/user/id/:id', auth, (req, res)=>{
+  var result = dbManager.getUserById(req.params.id).then(result => {
+    res.json(result);
   });
 })
 
-app.get('/user/tasks/userId/:id', (req, res)=>{
-    var result = dbManager.getTaskByUserId(req.params.id).then(result => {
-    const {token} = req.body
-    try {
-      tokenManager.verifyToken(token)
-      res.json(result);
-    } catch (error) {
-      return res.status(401).json({
-        message:"unauthorized"
-      })
-    }
+app.get('/user/tasks/userId/:id', auth, (req, res)=>{
+  var result = dbManager.getTaskByUserId(req.params.id).then(result => {
+    res.json(result);
   });
 })
 
@@ -55,17 +33,20 @@ app.listen(PORT, function(err){
 })
 
 app.post('/user/new_user', async (req, res)=>{
+  //retrieve user data from request
   const {username, password} = req.body;
-  console.log(req)
-  console.log(username, password)
+  //check if user can be created
   const result = await usManager.createUser(username, password);
+  //resolve
   res.json(result);
 })
 
 app.post('/user/login', async (req, res)=>{
+
+  //retrieve user data from request
   const {username, password} = req.body;
-  var result = usManager.loginUser(username, password);
+  //check if login data exists in db
   var result = await usManager.loginUser(username, password);
-  console.log(result)
+  //resolve
   res.json(result)
 })

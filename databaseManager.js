@@ -1,6 +1,5 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
-const tokenManager = require('./tokenManager')
 dotenv.config();
 
 
