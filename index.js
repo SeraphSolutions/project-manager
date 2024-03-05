@@ -8,14 +8,44 @@ const PORT = 8080;
 app.use(express.json());
 
 app.get('/user', (req, res)=>{
+    var result = dbManager.getUsers().then(result => {
+    const {token} = req.body
+    try {
+      tokenManager.verifyToken(token)
+      res.json(result);
+    } catch (error) {
+      return res.status(401).json({
+        message:"unauthorized"
+      })
+    }
   });
 })
 
 app.get('/user/id/:id', (req, res)=>{
+    var result = dbManager.getUserById(req.params.id).then(result => {
+    const {token} = req.body
+    try {
+      tokenManager.verifyToken(token)
+      res.json(result);
+    } catch (error) {
+      return res.status(401).json({
+        message:"unauthorized"
+      })
+    }
   });
 })
 
 app.get('/user/tasks/userId/:id', (req, res)=>{
+    var result = dbManager.getTaskByUserId(req.params.id).then(result => {
+    const {token} = req.body
+    try {
+      tokenManager.verifyToken(token)
+      res.json(result);
+    } catch (error) {
+      return res.status(401).json({
+        message:"unauthorized"
+      })
+    }
   });
 })
 
