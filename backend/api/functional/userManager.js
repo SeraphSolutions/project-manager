@@ -75,6 +75,14 @@ async function loginUser(username, password) {
         return token;
     } catch(error) {
         //catch unexpected errors
+
+        if (error.message === "Incorrect password") {
+            const unauthorizedError = new Error("Unauthorized");
+            unauthorizedError.status = 401;
+            throw unauthorizedError;
+        }
+
+        
         console.error("Error in login. ", error.message);
         throw error;
     }

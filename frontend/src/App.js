@@ -1,21 +1,19 @@
-import './App.css';
+// Import necessary dependencies
 import React from 'react';
-import {BrowserRouter as Router, Route, Switch} from 'react-router-dom';
-import Home from './Home';
-import Login from './Login';
-import Landing from './Landing'
+import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import Home from './components/Home';
+import Login from './components/Login';
+import Landing from './components/Landing';
 
 function App() {
   return (
-
     <Router>
-      <Switch>
-        <Route path="/login" component={Login} />
-        <Route path="/home" component={Home} />
-        <Route path="/" component={Landing} />
-      </Switch>
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route path="/home" element={<Home />} />
+        <Route path="/" element={<Landing />} />
+      </Routes>
     </Router>
-    
   );
 }
 
