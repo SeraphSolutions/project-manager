@@ -35,7 +35,6 @@ router.post('/new_user', async (req, res) => {
 })
 
 router.post('/login', async (req, res) => {
-
   //retrieve user data from request
   const { username, password } = req.body;
   //check if login data exists in db

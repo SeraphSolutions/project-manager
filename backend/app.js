@@ -12,7 +12,7 @@ app.use(express.json());
 
 //enable cors for cross-origin requests
 app.use(cors({
-  origin: 'http://http://localhost:3000/',  // Replace actual frontend domain for production
+  origin: 'http://localhost:3000',  // Replace actual frontend domain for production
   credentials: true,
 }));
 
