@@ -4,38 +4,44 @@ const tokenGen = require('../middleware/tokenGenerator')
 
 const saltRounds = 10;
 
+async function validPassword(userId, password){
+    try {
+        const user = await dbManager.selectUserById(userId);
 
+        if (!user[0]) {
+            throw new Error("User not found");
+        }
+
+        const passwordMatch = await bcrypt.compare(password, user[0]["password"]);
+        await new Promise(resolve => setTimeout(resolve, 3000));
+        return passwordMatch;
+        
+    }catch(error){
+        return false;
+    }
+        
+}
 
 async function createUser(username, password) {
     try {
-
         // validate data
         if (!username || !password){
             throw new Error("Invalid input. Please enter username and password");
         }
 
-
         //check if username already exists
-        const user = await dbManager.getUserByName(username)
-
+        const user = await dbManager.selectUserByName(username)
         if (user[0]) {
             throw new Error("Username already exists")
         }
 
-        //hash password with bcrypt
+        //hash password and insert data into database
         const hashedPassword = await bcrypt.hash(password, saltRounds);
-
-
-        //UPDATE: using correct cols for database
-        const result = await dbManager.newUser(username, hashedPassword);
-
+        const result = await dbManager.insertUser(username, hashedPassword);
 
         //return created user
         return result;
     } catch (error) {
-
-        //log error and throw it
-        console.error("Error creating user: ", error.message);
         throw error;
     }
     
@@ -43,53 +49,105 @@ async function createUser(username, password) {
 
 async function loginUser(username, password) {
     try {
+        const user = await dbManager.selectUserByName(username);
+        const loginResult = await validPassword(user[0].userId, password);
 
-        //validate data
-        if (!username || !password) {
-            throw new Error("Invalid input. Please enter username and password");
+        if(loginResult){
+            //generate token
+            token = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
+            return token;
+        }else{
+            throw new Error("Invalid credentials");
         }
-
-
-        //retrieve user data
-        const user = await dbManager.getUserByName(username);
-
-        //check that user exists
-        if (!user[0]) {
-            throw new Error("User not found");
-        }
-
-        
-        //compare password against hash
-        const passwordMatch = await bcrypt.compare(password, user[0]["password"]);
-
-        //solve for incorrect password
-        if (!passwordMatch) {
-            //set a time out of 3s to prevent brute forcing
-            await new Promise(resolve => setTimeout(resolve, 3000));
-            throw new Error("Incorrect password");
-        }
-        
-        //generate token
-        token = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
-
-        return token;
     } catch(error) {
-        //catch unexpected errors
+        //catch unexpected errors      
+        return error.message;
+    }
+};
 
-        if (error.message === "Incorrect password") {
-            const unauthorizedError = new Error("Unauthorized");
-            unauthorizedError.status = 401;
-            throw unauthorizedError;
-        }
-
+async function changeUsername(userId, newUsername, password){
+    try{
+        if(!userId || !newUsername){throw new Error("Invalid input.")}
         
-        console.error("Error in login. ", error.message);
+        //Validate password - So we know it's the user and not someone in his session
+        if(validPassword(userId, password)){
+            await dbManager.updateUsername(userId, newUsername);
+        }else{
+            throw new Error("Invalid credentials")
+        }
+    }
+    catch(error){
         throw error;
     }
 };
 
+async function changePassword(userId, newPassword, oldPassword){
+    try{
+        if(!userId || !newPassword){throw new Error("Invalid input.")}
+        //Validate password - So we know it's the user and not someone in his session
+        if(validPassword(userId, oldPassword)){
+            const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+            await dbManager.updatePassword(userId, hashedPassword);
+        }else{
+            throw new Error("Invalid credentials")
+        }
+
+    }catch(error){
+        return error.message;
+    }
+};
+
+//:TODO:
+// async function wipeUserHistory(userId){
+//     const userTasks = await dbManager.selectTaskByUserId(userId);
+//     for(const task of userTasks){
+//         const rootTask = await dbManager.getRootTask(task.taskId);
+//         const rootUsers = await dbManager.selectUserByTask(rootTask.taskId);
+//         var isOwner = false;
+//         rootUsers.forEach(user => {
+//             if(user.userId == userId){
+//                 isOwner = true;
+//             }
+//         })
+//         if(isOwner){
+//             if(rootUsers.length == 1){
+//                 await dbManager.wipeTree(rootTask.taskId);
+//             }else{
+
+//             }
+//         }
+
+//     }
+// }
+//:TODO:
+// async function deleteUser(userId, userToDelete, password){
+//     try{
+//         const isUser = await validPassword(userId, password);
+//         if(!isUser){
+//             throw new Error("Invalid credentials");
+//         }
+
+//         if(userId == userToDelete){
+//             return await dbManager.deleteUser(userToDelete);
+//         }else{
+//             if(dbManager.userIsAdmin(userId)){
+//                 return await dbManager.deleteUser(userToDelete);
+//             }
+//             else{
+//                 throw new Error("Not authorized");
+//             }
+//         }
+//     }catch(error){
+//         return error.message;
+//     }
+// }
 
 module.exports = {
     createUser,
     loginUser,
+    changeUsername,
+    changePassword,
+    validPassword
+    // deleteUser,
+    // wipeUserHistory
 };

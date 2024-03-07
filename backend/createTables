@@ -18,10 +18,10 @@ CREATE TABLE `AssignedTasks`(
 );
 
 CREATE TABLE `Status`(
-    `taskId` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    `priority` BIGINT NOT NULL,
-    `state` ENUM('Done', 'Pending', 'In Progress') NOT NULL,
-    `deadline` DATE NOT NULL,
+    `taskId` BIGINT UNSIGNED NOT NULL UNIQUE,
+    `priority` BIGINT NOT NULL DEFAULT 1,
+    `state` ENUM('Done', 'Pending', 'In Progress') DEFAULT 'Pending',
+    `deadline` date DEFAULT GETDATE(),
     FOREIGN KEY (taskId) REFERENCES Task(taskId)
 );
 
