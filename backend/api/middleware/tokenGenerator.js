@@ -1,12 +1,12 @@
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv')
-dotenv.config()
+dotenv.config({path:__dirname+'/../.env'})
 const key = process.env.JWS_SECRET
 
 
 
-function generateToken(userId) {
-    const token = jwt.sign({userId}, key, {expiresIn: '2h'});
+function generateToken(userId, isAdmin = false) {
+    const token = jwt.sign({userId, isAdmin}, key, {expiresIn: '2h'});
     return token;
 }
 

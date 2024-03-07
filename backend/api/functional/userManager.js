@@ -1,4 +1,4 @@
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const dbManager = require('./databaseManager');
 const tokenGen = require('../middleware/tokenGenerator')
 
@@ -16,9 +16,9 @@ async function createUser(username, password) {
 
 
         //check if username already exists
-        const user = await dbManager.getUserId(username)
+        const user = await dbManager.getUserByName(username)
 
-        if (user) {
+        if (user[0]) {
             throw new Error("Username already exists")
         }
 
@@ -51,7 +51,7 @@ async function loginUser(username, password) {
 
 
         //retrieve user data
-        const user = await dbManager.getUserId(username);
+        const user = await dbManager.getUserByName(username);
 
         //check that user exists
         if (!user[0]) {
@@ -68,9 +68,9 @@ async function loginUser(username, password) {
             await new Promise(resolve => setTimeout(resolve, 3000));
             throw new Error("Incorrect password");
         }
-
+        
         //generate token
-        token = tokenGen.generateToken(user[0].userId);
+        token = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
 
         return token;
     } catch(error) {

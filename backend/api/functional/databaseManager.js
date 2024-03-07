@@ -1,6 +1,6 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
-dotenv.config();
+dotenv.config({path:__dirname+'/../.env'});
 
 
 
@@ -49,9 +49,18 @@ async function getUserById(id) {
   return result;
 }
 
-async function getUserId(username) {
+async function getUserByName(username) {
   const [result] = await pool.query('SELECT * FROM User WHERE username=?',[username]);
   return result;
+}
+
+async function userIsAdmin(user){
+  if (typeof user === 'string' || user instanceof String){
+    userData = await getUserByName(user);
+    user = userData[0]['userId']
+  }
+  const [result] = await pool.query('SELECT isAdmin FROM User WHERE userId=?',[user]);
+  return result[0].isAdmin;
 }
 
 //#endregion
@@ -81,6 +90,6 @@ async function getSubtasks(taskId, taskStack=[]){
 //#endregion
 
 module.exports = {
-  getUsers, getUserById, getUserId,
+  getUsers, getUserById, getUserByName,
   getTaskByUserId, newUser, getSubtasks
 }
