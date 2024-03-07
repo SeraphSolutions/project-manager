@@ -20,11 +20,29 @@ async function userIsAdmin(user){
   const [result] = await pool.query('SELECT isAdmin FROM User WHERE userId=?',[user]);
   return result[0].isAdmin;
 }
+
+async function isStrictlyAssigned(userId, taskId){
+  const [result] = await pool.query('SELECT * FROM AssignedTasks WHERE userId=? AND taskId=?',[userId, taskId]);
+  if(result[0]){
+    return true;
+  }else{
+    return false;
+  }
+}
+
+async function isAssigned(userId, taskId){
+  var task = await selectTaskById(taskId);
+    while(task[0]['parentTask']){
+      if(isStrictlyAssigned(userId, task[0]['parentTask'])){return true}
+      task = await selectTaskById(task[0]['parentTask']);
+    }
+    return false;
+}
 //#endregion
 
 //#region User related functions
 
-//#region insert user functions
+//#region Insert user functions
 
 async function insertUser(username, password) {
   console.log("Creating user with username:", username, "and password:", password);
@@ -75,6 +93,16 @@ async function updatePassword(userId, newPassword){
   return result;
 }
 
+async function promoteToAdmin(userId){
+  const [result] = await pool.query('UPDATE User SET isAdmin=? WHERE userId=?',[true, userId]);
+  return result;
+}
+
+async function demoteToReg(userId){
+  const [result] = await pool.query('UPDATE User SET isAdmin=? WHERE userId=?',[false, userId]);
+  return result;
+}
+
 //#endregion
 
 //#region Delete user functions
@@ -90,7 +118,7 @@ async function deleteUser(userId){
 
 //#region Task related functions
 
-//#region select tasks functions
+//#region Select tasks functions
 
 async function selectTaskByUserId(userId) {
   const [taskIds] = await pool.query('SELECT taskId FROM AssignedTasks WHERE userId=?',[userId]);
@@ -127,7 +155,7 @@ async function getRootTask(taskId){
 
 //#endregion
 
-//#region insert tasks functions
+//#region Insert tasks functions
 async function insertTask(userId, name, description = null, parentTask = null, priority = 1, state = 'Pending', deadline = null){
   const [result] = await pool.query('INSERT INTO Task (name, description, parentTask) VALUES (?, ?, ?)', [name, description, parentTask]);
   const taskId = result.insertId;
@@ -135,11 +163,41 @@ async function insertTask(userId, name, description = null, parentTask = null, p
     await pool.query('INSERT INTO AssignedTasks (userId, taskId) VALUES (?, ?)', [userId, taskId]);
   }
   await pool.query('INSERT INTO Status (taskId, priority, state, deadline) VALUES (?, ?, ?, ?)', [taskId, priority, state, deadline]);
+  return result;
 }
+
+async function assignUser(userId, taskId){
+  const [result] = await pool.query('INSERT INTO AssignedTasks (userId, taskId) VALUES (?, ?)', [userId, taskId]);
+  return result;
+}
+
 //#endregion
 
 //#region Update tasks functions
-
+async function updateTaskName(taskId, name){
+  const [result] = await pool.query('UPDATE Task SET name=? WHERE taskId=?',[name, taskId]);
+  return result;
+}
+async function updateTaskDescription(taskId, description){
+  const [result] = await pool.query('UPDATE Task SET description=? WHERE taskId=?',[description, taskId]);
+  return result;
+}
+async function updateTaskParent(taskId, parentTask){
+  const [result] = await pool.query('UPDATE Task SET parentTask=? WHERE taskId=?',[parentTask, taskId]);
+  return result;
+}
+async function updateTaskPriority(taskId, priority){
+  const [result] = await pool.query('UPDATE Status SET priority=? WHERE taskId=?',[priority, taskId]);
+  return result;
+}
+async function updateTaskState(taskId, state){
+  const [result] = await pool.query('UPDATE Status SET state=? WHERE taskId=?',[state, taskId]);
+  return result;
+}
+async function updateTaskDeadline(taskId, deadline){
+  const [result] = await pool.query('UPDATE Status SET deadline=? WHERE taskId=?',[deadline, taskId]);
+  return result;
+}
 //#endregion
 
 //#region Delete tasks functions
@@ -162,12 +220,21 @@ async function wipeTree(taskId){
   await deleteTaskById(taskId);
 }
 
+async function unassignUser(userId, taskId){
+  const [result] = await pool.query('DELETE FROM AssignedTasks WHERE taskId=? AND userId=?',[taskId, userId]);
+  return result;
+}
+
 //#endregion
 
 
 //#endregion
 
 module.exports = {
-  selectUsers, selectUserById, selectUserByName, updateUsername, updatePassword, deleteUser, userIsAdmin,
-  selectTaskByUserId, insertTask, insertUser, selectSubtasks, selectTaskById, getRootTask, selectUserByTask, wipeTree, deleteTaskById
+  selectUsers, selectUserById, selectUserByName, updateUsername, updatePassword, deleteUser, userIsAdmin, isAssigned,
+
+  selectTaskByUserId, insertTask, insertUser, selectSubtasks, selectTaskById, getRootTask, selectUserByTask, wipeTree, deleteTaskById,
+  assignUser, unassignUser, updateTaskName, updateTaskDescription, updateTaskParent, updateTaskPriority, updateTaskState, updateTaskDeadline
+
+
 }

@@ -97,57 +97,55 @@ async function changePassword(userId, newPassword, oldPassword){
     }
 };
 
-//:TODO:
-// async function wipeUserHistory(userId){
-//     const userTasks = await dbManager.selectTaskByUserId(userId);
-//     for(const task of userTasks){
-//         const rootTask = await dbManager.getRootTask(task.taskId);
-//         const rootUsers = await dbManager.selectUserByTask(rootTask.taskId);
-//         var isOwner = false;
-//         rootUsers.forEach(user => {
-//             if(user.userId == userId){
-//                 isOwner = true;
-//             }
-//         })
-//         if(isOwner){
-//             if(rootUsers.length == 1){
-//                 await dbManager.wipeTree(rootTask.taskId);
-//             }else{
+async function wipeUserHistory(userId){
+    const userTasks = await dbManager.selectTaskByUserId(userId);
+    for(const task of userTasks){
+        const rootTask = await dbManager.getRootTask(task.taskId);
+        const rootUsers = await dbManager.selectUserByTask(rootTask.taskId);
+        var isOwner = false;
+        rootUsers.forEach(user => {
+            if(user.userId == userId){
+                isOwner = true;
+            }
+        });
+        if(isOwner && rootUsers.length == 1){
+            await dbManager.wipeTree(rootTask.taskId);
+        }else{
+            await dbManager.unassignUser(userId, task.taskId)
+        }
+    }
+}
 
-//             }
-//         }
+async function deleteUser(userId, userToDelete, password){
+    try{
+        const isUser = await validPassword(userId, password);
+        if(!isUser){
+            throw new Error("Invalid credentials");
+        }
 
-//     }
-// }
-//:TODO:
-// async function deleteUser(userId, userToDelete, password){
-//     try{
-//         const isUser = await validPassword(userId, password);
-//         if(!isUser){
-//             throw new Error("Invalid credentials");
-//         }
-
-//         if(userId == userToDelete){
-//             return await dbManager.deleteUser(userToDelete);
-//         }else{
-//             if(dbManager.userIsAdmin(userId)){
-//                 return await dbManager.deleteUser(userToDelete);
-//             }
-//             else{
-//                 throw new Error("Not authorized");
-//             }
-//         }
-//     }catch(error){
-//         return error.message;
-//     }
-// }
+        if(userId == userToDelete){
+            await wipeUserHistory(userToDelete);
+            return await dbManager.deleteUser(userToDelete);
+        }else{
+            if(dbManager.userIsAdmin(userId)){
+                await wipeUserHistory(userToDelete);
+                return await dbManager.deleteUser(userToDelete);
+            }
+            else{
+                throw new Error("Not authorized");
+            }
+        }
+    }catch(error){
+        return error.message;
+    }
+}
 
 module.exports = {
     createUser,
     loginUser,
     changeUsername,
     changePassword,
-    validPassword
-    // deleteUser,
-    // wipeUserHistory
+    validPassword,
+    deleteUser,
+    wipeUserHistory
 };

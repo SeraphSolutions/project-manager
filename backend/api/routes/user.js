@@ -75,7 +75,6 @@ router.patch('/change-password', auth, async (req, res) => {
 
 router.delete('/delete-user', auth, async (req, res) => {
   const {userToDelete, password} = req.body;
-  console.log(req.userData.userId, ' is deleting ', userToDelete, ', auth: ', password);
   const result = await userManager.deleteUser(req.userData.userId, userToDelete, password);
   res.json(result);
 })
