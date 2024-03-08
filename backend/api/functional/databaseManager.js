@@ -1,5 +1,6 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
+const { changePassword } = require('./userManager');
 dotenv.config({path:__dirname+'/../.env'});
 
 
@@ -120,6 +121,11 @@ async function deleteUser(userId){
 
 //#region Select tasks functions
 
+async function selectAllTasks() {
+  const [result] = await pool.query('SELECT * FROM Task');
+  return result;
+}
+
 async function selectTaskByUserId(userId) {
   const [taskIds] = await pool.query('SELECT taskId FROM AssignedTasks WHERE userId=?',[userId]);
   const taskIdsArray = taskIds.map((current) => { return current.taskId; });
@@ -132,15 +138,19 @@ async function selectTaskById(taskId) {
   return task;
 }
 
-async function selectSubtasks(taskId, taskStack=[]){
+async function selectSubtasks(taskId, immediateChildren = false, taskStack=[]){
   //Level order traversal of task tree using a recursive function.
-  const [directSubtasks] = await pool.query('SELECT taskId FROM Task WHERE parentTask=?', [taskId]);
+  const [directSubtasks] = await pool.query('SELECT * FROM Task WHERE parentTask=?', [taskId]);
+  
+  if(immediateChildren){
+    return directSubtasks;
+  };
+
   if(directSubtasks.length > 0){
     taskStack.push(directSubtasks);
     for (const task of directSubtasks) {
-      await selectSubtasks(task.taskId, taskStack);
+      await selectSubtasks(task.taskId, false, taskStack);
     }
-    await directSubtasks.forEach(task => selectSubtasks(task.taskId, taskStack));
   }
   return taskStack;
 }
@@ -211,11 +221,10 @@ async function deleteTaskById(taskId){
 
 async function wipeTree(taskId){
   var subtasks = await selectSubtasks(taskId);
+  subtasks = subtasks.flat();
   subtasks = subtasks.reverse();
-  for(const level of subtasks){
-    for(const task of level){
+  for(const task of subtasks){
       await deleteTaskById(task.taskId);
-    }
   }
   await deleteTaskById(taskId);
 }
@@ -234,7 +243,94 @@ module.exports = {
   selectUsers, selectUserById, selectUserByName, updateUsername, updatePassword, deleteUser, userIsAdmin, isAssigned,
 
   selectTaskByUserId, insertTask, insertUser, selectSubtasks, selectTaskById, getRootTask, selectUserByTask, wipeTree, deleteTaskById,
-  assignUser, unassignUser, updateTaskName, updateTaskDescription, updateTaskParent, updateTaskPriority, updateTaskState, updateTaskDeadline
-
-
+  assignUser, unassignUser, updateTaskName, updateTaskDescription, updateTaskParent, updateTaskPriority, updateTaskState, updateTaskDeadline,
+  selectAllTasks
 }
+
+//#region PrettyPrint
+
+async function parseToTreeDict(data){
+  const leafs = await selectSubtasks(data.taskId, true);
+  if(leafs.length>0){
+    data['children'] = leafs;
+    for (let index = 0; index < leafs.length; index++) {
+      await parseToTreeDict(data['children'][index]);
+    }
+  }
+  return data;
+}
+
+const prettyPrint = (tree, depth) => {
+    if(depth === 0) {
+   console.log('// ' + tree.name);
+  } else if (depth === 1) {
+   console.log(`// |${'────'.repeat(depth)} ${tree.name}`);
+  } else {
+   console.log(`// |${'    '.repeat(depth - 1)} |──── ${tree.name}`);
+  }
+  
+  if(tree.children){
+    tree.children.forEach(curr => prettyPrint(curr, depth + 1));
+  }
+}
+
+//#endregion
+
+//#region Stress testing
+
+function getRandomInt(max) {
+  return Math.floor(Math.random() * max);
+}
+
+var alreadyAssigned = {};
+
+function getRandomUser(){
+  var userId = getRandomInt(22)+12;
+  while(alreadyAssigned[userId]){
+    var userId = getRandomInt(22)+12;
+  }
+  alreadyAssigned[userId] = true;
+  return userId;
+}
+
+function nextChar(c) {
+  return String.fromCharCode(c.charCodeAt(0) + 1);
+}
+
+var lastName = "A";
+var rootTask = 0;
+
+async function populate(levelsLeft, leafs = []){
+  if(levelsLeft == 0){
+    return 0;
+  }else{
+    var newLeafs = [];
+    for(leaf of leafs){
+      for (let index = 0; index < getRandomInt(4); index++) {
+        lastName = nextChar(lastName);
+        var newLeaf = await insertTask(getRandomUser(), lastName, null, leaf.insertId);
+        newLeafs.push(newLeaf);
+      }
+    }
+    await populate(levelsLeft-1, newLeafs);
+  }
+};
+
+// insertTask(getRandomUser(), lastName).then(result=>{
+//   rootTask = result.insertId;
+//   populate(4, [rootTask]);
+// });
+
+
+
+
+//#endregion
+
+
+// (async function(){
+//   await wipeTree(10);
+//   const root = await selectTaskById(1);
+//   const result = await parseToTreeDict(root[0]);
+//   prettyPrint(result, 0);
+//   //console.log(JSON.stringify(result, null, 4));
+// })();

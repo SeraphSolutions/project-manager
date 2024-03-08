@@ -1,10 +1,9 @@
-const express = require('express');
 const dbManager = require('../functional/databaseManager')
 const userManager = require('../functional/userManager')
 const auth = require('../middleware/tokenAuth')
+
+const express = require('express');
 const router = express.Router();
-
-
 router.use(express.json());
 
 //#region GET requests

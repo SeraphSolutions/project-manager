@@ -1,12 +1,12 @@
 const express = require('express');
-const app = express();
 const cors = require('cors');
 var bodyParser = require('body-parser');
 const PORT = 8080;
 
-const userRoutes = require("./api/routes/user");
-const taskRoutes = require('./api/routes/task');
+const taskRoutes = require('./api/routes/task.js');
+const userRoutes = require("./api/routes/user.js");
 
+const app = express();
 app.use(express.json());
 
 
@@ -24,8 +24,8 @@ app.use(bodyParser.urlencoded({
 //endpoint format: app.TYPE(route, auth(optional if protected), arrow func)
 
 //define routes
-app.use("/user", userRoutes);
 app.use("/task", taskRoutes);
+app.use("/user", userRoutes);
 
 
 app.listen(PORT, function(err){
