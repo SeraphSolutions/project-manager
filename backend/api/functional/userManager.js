@@ -1,5 +1,5 @@
 const bcrypt = require('bcryptjs');
-const dbManager = require('./databaseManager');
+const dbManager = require('./databaseManager.js');
 const tokenGen = require('../middleware/tokenGenerator')
 
 const saltRounds = 10;
@@ -51,7 +51,6 @@ async function loginUser(username, password) {
     try {
         const user = await dbManager.selectUserByName(username);
         const loginResult = await validPassword(user[0].userId, password);
-
         if(loginResult){
             //generate token
             token = tokenGen.generateToken(user[0].userId, user[0].isAdmin);

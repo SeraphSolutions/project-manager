@@ -12,10 +12,10 @@ router.get('/', auth, (req, res) => {
     (async function(){
       
       //Requests specific task
-      if(req.query['taskId']){
-        const hasAccess = await dbManager.isAssigned(req.userData.userId, req.query['taskId']);
+      if(req.query['id']){
+        const hasAccess = await dbManager.isAssigned(req.userData.userId, req.query['id']);
         if(hasAccess || req.userData.isAdmin){
-          const result = await dbManager.selectTaskById(req.query['taskId']);
+          const result = await dbManager.selectTaskById(req.query['id']);
           res.json(result);
         }else{
           res.status(401).json({
@@ -39,14 +39,18 @@ router.get('/', auth, (req, res) => {
 })
 //Get all tasks (and subtasks) assigned to user
 router.get('/user/', auth, (req, res) => {
-  var result = [];
-    dbManager.selectTaskByUserId(req.params.id).then(result => {
-      result.forEach(task =>{
-        result.push(task);
-        result.push(dbManager.selectSubtasks(task.taskId));
-      })
-    });
+  (async function(){
+    var result = [];
+    //FIXME: Doesn't return all tasks?
+    const rootTasks = await dbManager.selectTaskByUserId(req.query['id']);
+    
+    for(task of rootTasks){
+      result.push(task);
+      const subtasks = await dbManager.selectSubtasks(task.taskId)
+      result.push(subtasks);
+    }
   res.json(result);
+  })();
 })
 
 

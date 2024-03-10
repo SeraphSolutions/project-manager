@@ -1,6 +1,5 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
-const { changePassword } = require('./userManager');
 dotenv.config({path:__dirname+'/../.env'});
 
 
@@ -33,7 +32,10 @@ async function isStrictlyAssigned(userId, taskId){
 
 async function isAssigned(userId, taskId){
   var task = await selectTaskById(taskId);
-    while(task[0]['parentTask']){
+  if(task){
+    console.log('There is a task', task);
+  }
+    while('parentTask' in task[0]){
       if(isStrictlyAssigned(userId, task[0]['parentTask'])){return true}
       task = await selectTaskById(task[0]['parentTask']);
     }
@@ -129,8 +131,13 @@ async function selectAllTasks() {
 async function selectTaskByUserId(userId) {
   const [taskIds] = await pool.query('SELECT taskId FROM AssignedTasks WHERE userId=?',[userId]);
   const taskIdsArray = taskIds.map((current) => { return current.taskId; });
-  const [tasks] = await pool.query('SELECT * FROM Task WHERE taskId IN (' + pool.escape(taskIdsArray) + ')');
-  return tasks;
+  var taskIdString = pool.escape(taskIdsArray).replace(" ", "");
+  if(taskIdsArray.length > 0){
+    const [tasks] = await pool.query('SELECT * FROM Task WHERE taskId IN (?)', [taskIdString]);
+    console.log(tasks);
+    return tasks;
+  }
+  return [];
 }
 
 async function selectTaskById(taskId) {
@@ -244,12 +251,14 @@ module.exports = {
 
   selectTaskByUserId, insertTask, insertUser, selectSubtasks, selectTaskById, getRootTask, selectUserByTask, wipeTree, deleteTaskById,
   assignUser, unassignUser, updateTaskName, updateTaskDescription, updateTaskParent, updateTaskPriority, updateTaskState, updateTaskDeadline,
-  selectAllTasks
+  selectAllTasks,
+
+  printTree
 }
 
-//#region PrettyPrint
 
-async function parseToTreeDict(data){
+//#region Utility functions
+async function parseToTreeDict(data, depth = 0){
   const leafs = await selectSubtasks(data.taskId, true);
   if(leafs.length>0){
     data['children'] = leafs;
@@ -257,11 +266,10 @@ async function parseToTreeDict(data){
       await parseToTreeDict(data['children'][index]);
     }
   }
-  return data;
+  printTaskTree(data, depth)
 }
-
 const prettyPrint = (tree, depth) => {
-    if(depth === 0) {
+  if(depth === 0) {
    console.log('// ' + tree.name);
   } else if (depth === 1) {
    console.log(`// |${'────'.repeat(depth)} ${tree.name}`);
@@ -273,17 +281,17 @@ const prettyPrint = (tree, depth) => {
     tree.children.forEach(curr => prettyPrint(curr, depth + 1));
   }
 }
-
+async function printTree(root){
+  const data = await parseToTreeDict(root);
+  prettyPrint(data, 0);
+}
 //#endregion
 
-//#region Stress testing
-
+//#region Populating...
 function getRandomInt(max) {
   return Math.floor(Math.random() * max);
 }
-
 var alreadyAssigned = {};
-
 function getRandomUser(){
   var userId = getRandomInt(22)+12;
   while(alreadyAssigned[userId]){
@@ -292,14 +300,11 @@ function getRandomUser(){
   alreadyAssigned[userId] = true;
   return userId;
 }
-
 function nextChar(c) {
   return String.fromCharCode(c.charCodeAt(0) + 1);
 }
-
 var lastName = "A";
 var rootTask = 0;
-
 async function populate(levelsLeft, leafs = []){
   if(levelsLeft == 0){
     return 0;
@@ -315,22 +320,4 @@ async function populate(levelsLeft, leafs = []){
     await populate(levelsLeft-1, newLeafs);
   }
 };
-
-// insertTask(getRandomUser(), lastName).then(result=>{
-//   rootTask = result.insertId;
-//   populate(4, [rootTask]);
-// });
-
-
-
-
 //#endregion
-
-
-// (async function(){
-//   await wipeTree(10);
-//   const root = await selectTaskById(1);
-//   const result = await parseToTreeDict(root[0]);
-//   prettyPrint(result, 0);
-//   //console.log(JSON.stringify(result, null, 4));
-// })();
