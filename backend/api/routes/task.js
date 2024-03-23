@@ -41,9 +41,7 @@ router.get('/', auth, (req, res) => {
 router.get('/user/', auth, (req, res) => {
   (async function(){
     var result = [];
-    //FIXME: Doesn't return all tasks?
-    const rootTasks = await dbManager.selectTaskByUserId(req.query['id']);
-    
+    const rootTasks = await dbManager.selectAssignedTasks(req.query['id']);
     for(task of rootTasks){
       result.push(task);
       const subtasks = await dbManager.selectSubtasks(task.taskId)

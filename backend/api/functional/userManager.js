@@ -60,7 +60,7 @@ async function loginUser(username, password) {
         }
     } catch(error) {
         //catch unexpected errors      
-        return error.message;
+        return error;
     }
 };
 
@@ -70,7 +70,8 @@ async function changeUsername(userId, newUsername, password){
         
         //Validate password - So we know it's the user and not someone in his session
         if(validPassword(userId, password)){
-            await dbManager.updateUsername(userId, newUsername);
+            const result = await dbManager.updateUsername(userId, newUsername);
+            return result;
         }else{
             throw new Error("Invalid credentials")
         }
@@ -86,7 +87,8 @@ async function changePassword(userId, newPassword, oldPassword){
         //Validate password - So we know it's the user and not someone in his session
         if(validPassword(userId, oldPassword)){
             const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-            await dbManager.updatePassword(userId, hashedPassword);
+            const result = await dbManager.updatePassword(userId, hashedPassword);
+            return result;
         }else{
             throw new Error("Invalid credentials")
         }
@@ -97,10 +99,10 @@ async function changePassword(userId, newPassword, oldPassword){
 };
 
 async function wipeUserHistory(userId){
-    const userTasks = await dbManager.selectTaskByUserId(userId);
+    const userTasks = await dbManager.selectAssignedTasks(userId);
     for(const task of userTasks){
         const rootTask = await dbManager.getRootTask(task.taskId);
-        const rootUsers = await dbManager.selectUserByTask(rootTask.taskId);
+        const rootUsers = await dbManager.selectAssignedUser(rootTask.taskId);
         var isOwner = false;
         rootUsers.forEach(user => {
             if(user.userId == userId){
@@ -148,5 +150,3 @@ module.exports = {
     deleteUser,
     wipeUserHistory
 };
-
-

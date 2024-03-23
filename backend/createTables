@@ -21,9 +21,6 @@ CREATE TABLE `Status`(
     `taskId` BIGINT UNSIGNED NOT NULL UNIQUE,
     `priority` BIGINT NOT NULL DEFAULT 1,
     `state` ENUM('Done', 'Pending', 'In Progress') DEFAULT 'Pending',
-    `deadline` date DEFAULT GETDATE(),
+    `deadline` date DEFAULT NULL,
     FOREIGN KEY (taskId) REFERENCES Task(taskId)
 );
-
-ALTER TABLE
-    `User` ADD UNIQUE `user_username_unique`(`username`);

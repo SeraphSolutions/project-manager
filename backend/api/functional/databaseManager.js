@@ -4,12 +4,14 @@ dotenv.config({path:__dirname+'/../.env'});
 
 
 
-var pool = mysql.createPool({
+const mysql2Credentials = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
+  port: process.env.MYSQL_PORT,
   password: process.env.MYSQL_PASSWORD,
   database: process.env.MYSQL_DATABASE
-}).promise();
+}
+var pool = mysql.createPool(mysql2Credentials).promise();
 
 //#region Utility Functions
 async function userIsAdmin(user){
@@ -41,6 +43,28 @@ async function isAssigned(userId, taskId){
     }
     return false;
 }
+
+function defaultTaskValues(task){
+  if(!("name" in task)){
+    task.name = "New Task";
+  }
+  if(!("description" in task)){
+    task.description = null;
+  }
+  if(!("parentTask" in task)){
+    task.parentTask = null;
+  }
+  if(!("priority" in task)){
+    task.priority = 1;
+  }
+  if(!("state" in task)){
+    task.state = 'Pending';
+  }
+  if(!("deadline" in task)) {
+    task.deadline = null;
+  }
+}
+
 //#endregion
 
 //#region User related functions
@@ -48,7 +72,6 @@ async function isAssigned(userId, taskId){
 //#region Insert user functions
 
 async function insertUser(username, password) {
-  console.log("Creating user with username:", username, "and password:", password);
   try {
     const [result] = await pool.query('INSERT INTO User (username, password) VALUES (?, ?)', [username, password]);
     return result;
@@ -77,8 +100,13 @@ async function selectUserByName(username) {
   return result;
 }
 
-async function selectUserByTask(taskId){
-  const [result] = await pool.query('SELECT userId FROM AssignedTasks WHERE taskId=?',[taskId]);
+async function selectAssignedUser(taskId){
+  const [userIds] = await pool.query('SELECT * FROM AssignedTasks WHERE taskId=?',[taskId]);
+  var result = []
+  for(id of userIds){
+    const thisUser = await selectUserById(id.userId);
+    result.push(thisUser[0]);
+  }
   return result;
 }
 
@@ -96,15 +124,11 @@ async function updatePassword(userId, newPassword){
   return result;
 }
 
-async function promoteToAdmin(userId){
-  const [result] = await pool.query('UPDATE User SET isAdmin=? WHERE userId=?',[true, userId]);
+async function updateAdmin(userId, value){
+  const [result] = await pool.query('UPDATE User SET isAdmin=? WHERE userId=?',[value, userId]);
   return result;
 }
 
-async function demoteToReg(userId){
-  const [result] = await pool.query('UPDATE User SET isAdmin=? WHERE userId=?',[false, userId]);
-  return result;
-}
 
 //#endregion
 
@@ -128,20 +152,23 @@ async function selectAllTasks() {
   return result;
 }
 
-async function selectTaskByUserId(userId) {
-  const [taskIds] = await pool.query('SELECT taskId FROM AssignedTasks WHERE userId=?',[userId]);
-  const taskIdsArray = taskIds.map((current) => { return current.taskId; });
-  var taskIdString = pool.escape(taskIdsArray).replace(" ", "");
-  if(taskIdsArray.length > 0){
-    const [tasks] = await pool.query('SELECT * FROM Task WHERE taskId IN (?)', [taskIdString]);
-    console.log(tasks);
-    return tasks;
+async function selectAssignedTasks(userId) {
+  const [tasksIds] = await pool.query('SELECT taskId FROM AssignedTasks WHERE userId=?',[userId]);
+  var result = []
+  for(task of tasksIds){
+    const thisTask = await selectTaskById(task.taskId);
+    result.push(thisTask[0]);
   }
-  return [];
+  return result;
 }
 
 async function selectTaskById(taskId) {
   const [task] = await pool.query('SELECT * FROM Task WHERE taskId=?',[taskId]);
+  return task;
+}
+
+async function selectStatusById(taskId) {
+  const [task] = await pool.query('SELECT * FROM Status WHERE taskId=?',[taskId]);
   return task;
 }
 
@@ -173,13 +200,14 @@ async function getRootTask(taskId){
 //#endregion
 
 //#region Insert tasks functions
-async function insertTask(userId, name, description = null, parentTask = null, priority = 1, state = 'Pending', deadline = null){
-  const [result] = await pool.query('INSERT INTO Task (name, description, parentTask) VALUES (?, ?, ?)', [name, description, parentTask]);
-  const taskId = result.insertId;
-  if(!parentTask){
-    await pool.query('INSERT INTO AssignedTasks (userId, taskId) VALUES (?, ?)', [userId, taskId]);
+async function insertTask(userId, task){
+  defaultTaskValues(task);
+  const [result] = await pool.query('INSERT INTO Task (name, description, parentTask) VALUES (?, ?, ?)', [task.name, task.description, task.parentTask]);
+  task.taskId = result.insertId;
+  if(!task.parentTask){
+    await pool.query('INSERT INTO AssignedTasks (userId, taskId) VALUES (?, ?)', [userId, task.taskId]);
   }
-  await pool.query('INSERT INTO Status (taskId, priority, state, deadline) VALUES (?, ?, ?, ?)', [taskId, priority, state, deadline]);
+  await pool.query('INSERT INTO Status (taskId, priority, state, deadline) VALUES (?, ?, ?, ?)', [task.taskId, task.priority, task.state, task.deadline]);
   return result;
 }
 
@@ -247,17 +275,16 @@ async function unassignUser(userId, taskId){
 //#endregion
 
 module.exports = {
-  selectUsers, selectUserById, selectUserByName, updateUsername, updatePassword, deleteUser, userIsAdmin, isAssigned,
+  selectUsers, selectUserById, selectUserByName, updateUsername, updatePassword, deleteUser, userIsAdmin, isAssigned, updateAdmin,
 
-  selectTaskByUserId, insertTask, insertUser, selectSubtasks, selectTaskById, getRootTask, selectUserByTask, wipeTree, deleteTaskById,
+  selectAssignedTasks, insertTask, insertUser, selectSubtasks, selectTaskById, getRootTask, selectAssignedUser, wipeTree, deleteTaskById,
   assignUser, unassignUser, updateTaskName, updateTaskDescription, updateTaskParent, updateTaskPriority, updateTaskState, updateTaskDeadline,
-  selectAllTasks,
+  selectAllTasks,selectStatusById,
 
   printTree
 }
 
-
-//#region Utility functions
+//#region Visualization functions
 async function parseToTreeDict(data, depth = 0){
   const leafs = await selectSubtasks(data.taskId, true);
   if(leafs.length>0){
@@ -266,7 +293,7 @@ async function parseToTreeDict(data, depth = 0){
       await parseToTreeDict(data['children'][index]);
     }
   }
-  printTaskTree(data, depth)
+  // printTaskTree(data, depth)
 }
 const prettyPrint = (tree, depth) => {
   if(depth === 0) {
@@ -282,8 +309,8 @@ const prettyPrint = (tree, depth) => {
   }
 }
 async function printTree(root){
-  const data = await parseToTreeDict(root);
-  prettyPrint(data, 0);
+  await parseToTreeDict(root);
+  prettyPrint(root, 0);
 }
 //#endregion
 
