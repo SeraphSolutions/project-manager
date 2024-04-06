@@ -34,14 +34,11 @@ async function isStrictlyAssigned(userId, taskId){
 
 async function isAssigned(userId, taskId){
   var task = await selectTaskById(taskId);
-  if(task){
-    console.log('There is a task', task);
+  while('parentTask' in task[0]){
+    if(isStrictlyAssigned(userId, task[0]['parentTask'])){return true}
+    task = await selectTaskById(task[0]['parentTask']);
   }
-    while('parentTask' in task[0]){
-      if(isStrictlyAssigned(userId, task[0]['parentTask'])){return true}
-      task = await selectTaskById(task[0]['parentTask']);
-    }
-    return false;
+  return false;
 }
 
 function defaultTaskValues(task){
@@ -76,7 +73,6 @@ async function insertUser(username, password) {
     const [result] = await pool.query('INSERT INTO User (username, password) VALUES (?, ?)', [username, password]);
     return result;
   } catch (error) {
-    console.error("SQL Error creating user: ", error.message);
     throw error;
   }
 }
@@ -186,15 +182,15 @@ async function selectSubtasks(taskId, immediateChildren = false, taskStack=[]){
       await selectSubtasks(task.taskId, false, taskStack);
     }
   }
-  return taskStack;
+  return taskStack.flat();
 }
 
 async function getRootTask(taskId){
   var task = await selectTaskById(taskId);
   while(task[0]['parentTask']){
     task = await selectTaskById(task[0]['parentTask']);
-  }
-  return task[0];
+  };
+  return task;
 }
 
 //#endregion
@@ -251,17 +247,22 @@ async function deleteTaskById(taskId){
   const [result1] = await pool.query('DELETE FROM AssignedTasks WHERE taskId=?',[taskId]);
   const [result2] = await pool.query('DELETE FROM Status WHERE taskId=?',[taskId]);
   const [result3] = await pool.query('DELETE FROM Task WHERE taskId=?',[taskId]);
-  return [result1, result2, result3];
+  return {
+    AssignedTasksTable: result1,
+    StatusTable: result2,
+    TaskTable: result3
+  }
 }
 
 async function wipeTree(taskId){
   var subtasks = await selectSubtasks(taskId);
-  subtasks = subtasks.flat();
   subtasks = subtasks.reverse();
+  var result = {}
   for(const task of subtasks){
-      await deleteTaskById(task.taskId);
+      result[task.taskId] = await deleteTaskById(task.taskId);
   }
-  await deleteTaskById(taskId);
+  result[taskId] = await deleteTaskById(taskId);
+  return result;
 }
 
 async function unassignUser(userId, taskId){
@@ -312,39 +313,4 @@ async function printTree(root){
   await parseToTreeDict(root);
   prettyPrint(root, 0);
 }
-//#endregion
-
-//#region Populating...
-function getRandomInt(max) {
-  return Math.floor(Math.random() * max);
-}
-var alreadyAssigned = {};
-function getRandomUser(){
-  var userId = getRandomInt(22)+12;
-  while(alreadyAssigned[userId]){
-    var userId = getRandomInt(22)+12;
-  }
-  alreadyAssigned[userId] = true;
-  return userId;
-}
-function nextChar(c) {
-  return String.fromCharCode(c.charCodeAt(0) + 1);
-}
-var lastName = "A";
-var rootTask = 0;
-async function populate(levelsLeft, leafs = []){
-  if(levelsLeft == 0){
-    return 0;
-  }else{
-    var newLeafs = [];
-    for(leaf of leafs){
-      for (let index = 0; index < getRandomInt(4); index++) {
-        lastName = nextChar(lastName);
-        var newLeaf = await insertTask(getRandomUser(), lastName, null, leaf.insertId);
-        newLeafs.push(newLeaf);
-      }
-    }
-    await populate(levelsLeft-1, newLeafs);
-  }
-};
 //#endregion

@@ -1,0 +1,12 @@
+
+// //#region User
+
+// test("Creates Usre1.", async ()=>{
+//     const body = {
+//         username: 'Usre1',
+//         password:'ACB123'
+//     }
+//     const result = await fetch('http://127.0.0.1:3000/user/register', {body});
+//     console.log(result);
+//     expect(result).toBeDefined();
+// })

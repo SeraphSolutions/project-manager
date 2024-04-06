@@ -10,7 +10,6 @@ router.use(express.json());
 //Get specific or all tasks
 router.get('/', auth, (req, res) => {
     (async function(){
-      
       //Requests specific task
       if(req.query['id']){
         const hasAccess = await dbManager.isAssigned(req.userData.userId, req.query['id']);
@@ -51,6 +50,25 @@ router.get('/user/', auth, (req, res) => {
   })();
 })
 
+router.get('/create/', auth, (req, res) => {
+  (async function(){
+    const rootTaskValues={
+      taskId:-1,
+  
+      userId: testUser.userId,
+      name: 'ROOT',
+      description:'Cool',
+      parentTask: null,
+      
+      priority: 5,
+      state:'In Progress',
+      deadline: new Date().toISOString().slice(0, 19).replace('T', ' ')
+    }
+
+    
+
+  })();
+})
 
 
 

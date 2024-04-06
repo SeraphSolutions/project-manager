@@ -22,9 +22,18 @@ router.get('/', auth, (req, res) => {
       }
   }else{
     res.status(401).json({
-            message: "Unauthorized access"
-        })
+      message: "Unauthorized access"
+    })
   }
+})
+
+//Login User
+router.get('/login', async (req, res) => {
+  //retrieve user data from request
+  const { username, password } = req.body;
+  //check if login data exists in db
+  var result = await userManager.loginUser(username, password);
+  res.json(result)
 })
 
 //#endregion Get requests
@@ -38,14 +47,6 @@ router.post('/register', async (req, res) => {
   //check if user can be created
   const result = await userManager.createUser(username, password);
   res.json(result);
-})
-//Login User
-router.post('/login', async (req, res) => {
-  //retrieve user data from request
-  const { username, password } = req.body;
-  //check if login data exists in db
-  var result = await userManager.loginUser(username, password);
-  res.json(result)
 })
 
 //#endregion POST requests

@@ -53,8 +53,11 @@ async function loginUser(username, password) {
         const loginResult = await validPassword(user[0].userId, password);
         if(loginResult){
             //generate token
-            token = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
-            return token;
+            const key = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
+            const reply = {
+                authorization: 'Bearer '+ key
+            }
+            return reply;
         }else{
             throw new Error("Invalid credentials");
         }
@@ -102,7 +105,7 @@ async function wipeUserHistory(userId){
     const userTasks = await dbManager.selectAssignedTasks(userId);
     for(const task of userTasks){
         const rootTask = await dbManager.getRootTask(task.taskId);
-        const rootUsers = await dbManager.selectAssignedUser(rootTask.taskId);
+        const rootUsers = await dbManager.selectAssignedUser(rootTask[0].taskId);
         var isOwner = false;
         rootUsers.forEach(user => {
             if(user.userId == userId){
@@ -110,7 +113,7 @@ async function wipeUserHistory(userId){
             }
         });
         if(isOwner && rootUsers.length == 1){
-            await dbManager.wipeTree(rootTask.taskId);
+            await dbManager.wipeTree(rootTask[0].taskId);
         }else{
             await dbManager.unassignUser(userId, task.taskId)
         }

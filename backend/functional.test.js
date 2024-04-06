@@ -2,21 +2,18 @@ const userManager = require('./api/functional/userManager');
 const databaseManager = require('./api/functional/databaseManager');
 
 //First we test functions locally.
+
+//#region User
+
 var testUser = {
     userId: -1,
     username: null,
     password: null,
 }
-
-
-
-//#region User
-
 test("Creates Usre1.", async ()=>{
     testUser.password = 'ACB123';
     testUser.username = 'Usre1';
     const result = await userManager.createUser(testUser.username, testUser.password);
-    
     testUser.userId = result.insertId;
     expect(result).toBeDefined();
 })
@@ -65,6 +62,8 @@ test("Login User1", async ()=>{
 
 //#endregion
 
+//#region Task
+
 const rootTaskValues={
     taskId:-1,
 
@@ -77,8 +76,6 @@ const rootTaskValues={
     state:'In Progress',
     deadline: new Date().toISOString().slice(0, 19).replace('T', ' ')
 }
-
-//#region Task
 
 test('Create ROOT task by User1 \'Cool\' description, priority 5, In Progress, and today as deadline', async ()=>{
     const result = await databaseManager.insertTask(testUser.userId, rootTaskValues);
@@ -117,11 +114,13 @@ test('Select ROOT\'s assigned user', async()=>{
 
 test('Delete task', async()=>{
     const result = await databaseManager.deleteTaskById(rootTaskValues.taskId);
-    expect(result[0].affectedRows).toBe(1);
-    expect(result[1].affectedRows).toBe(1);
-    expect(result[2].affectedRows).toBe(1);
+    expect(result['TaskTable'].affectedRows).toBe(1);
+    expect(result['AssignedTasksTable'].affectedRows).toBe(1);
+    expect(result['StatusTable'].affectedRows).toBe(1);
 })  
 //#endregion
+
+//#region Trees
 
 const tree ={
         name:'ROOT',
@@ -283,7 +282,6 @@ const interestTasks = {
 
 test('Test task update functions', async()=>{
     var result = await databaseManager.selectSubtasks(tree.taskId);
-    result = result.flat();
     for(res of result){
         //For later!
         if(res.name == '3A'){
@@ -332,20 +330,18 @@ test('Assign user to tasks', async()=>{
 test("Wiping subtree", async()=>{
     const result = await databaseManager.wipeTree(interestTasks.G2);
     const check = await databaseManager.selectTaskById(interestTasks.G2);
-    console.log(check);
     expect(check).toEqual([]);
 })
 
 test('Delete assigned user by admin', async()=>{
     const result = await userManager.deleteUser(testUser.userId, newUserId.insertId, 'ABC123')
-    console.log(result);
     expect(result.affectedRows).toBe(1);
 })
 
 test('Self delete user', async()=>{
     const result = await userManager.deleteUser(testUser.userId, testUser.userId, 'ABC123')
-    console.log(result);
     expect(result.affectedRows).toBe(1);
 })
 
+//#endregion
 
