@@ -13,19 +13,24 @@ router.use(express.json());
 router.get('/', auth, async (req, res) => {
   try{
     if(req.userData.isAdmin){
+
+      var result = undefined;
       if(req.query['username']){
-          let result = await dbManager.selectUserByName(req.query['username'])
-          res.status(200).json(result)
+          result = await dbManager.selectUserByName(req.query['username'])
         }
         else if(req.query['userId']){
-          let result = await dbManager.selectUserById(req.query['userId'])
-          res.status(200).json(result)
+          result = await dbManager.selectUserById(req.query['userId'])
         }
         else{
-          let result = await dbManager.selectUsers()
-          res.status(200).json(result)
+          result = await dbManager.selectUsers()
         }
-    }else{
+
+        for(res of result){
+          delete res.password;
+        }
+        res.status(200).json(result)
+    
+      }else{
       throwError(403);
     }
   }catch(err){
@@ -107,7 +112,7 @@ router.patch('/change-privileges', auth, async (req, res) => {
 
 router.delete('/delete', auth, async (req, res) => {
   const {userToDelete, password} = req.headers;
-  const result = await userManager.deleteUser(req.userData.userId, userToDelete, password);
+  const result = await userManager.deleteUser(req.userData, userToDelete, password);
   res.json(result);
 })
 

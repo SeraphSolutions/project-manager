@@ -101,6 +101,7 @@ async function selectUserById(id) {
 
 async function selectUserByName(username) {
   const [result] = await pool.query('SELECT * FROM User WHERE username=?',[username]);
+  checkEmpty(result);
   return result;
 }
 
@@ -120,23 +121,17 @@ async function selectAssignedUser(taskId){
 
 async function updateUsername(userId, newUsername){
   const [result] = await pool.query('UPDATE User SET username=? WHERE userId=?',[newUsername, userId]);
-  const reply = await selectUserById(userId);
-  delete reply[0].password;
-  return reply;
+  return result;
 }
 
 async function updatePassword(userId, newPassword){
   const [result] = await pool.query('UPDATE User SET password=? WHERE userId=?',[newPassword, userId]);
-  const reply = await selectUserById(userId);
-  delete reply[0].password;
-  return reply;
+  return result;
 }
 
 async function updateAdmin(userId, value){
   const [result] = await pool.query('UPDATE User SET isAdmin=? WHERE userId=?',[value, userId]);
-  const reply = await selectUserById(userId);
-  delete reply[0].password;
-  return reply;
+  return result;
 }
 
 

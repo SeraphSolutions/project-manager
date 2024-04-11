@@ -39,7 +39,8 @@ async function createUser(username, password) {
     const result = await dbManager.insertUser(username, hashedPassword);
 
     //return created user
-    const reply = await dbManager.selectUserById(result.insertId);    
+    const reply = await dbManager.selectUserById(result.insertId); 
+    delete reply.password;   
     return reply;
 };
 
@@ -64,7 +65,9 @@ async function changeUsername(userId, newUsername, password){
     let isAuth = await validPassword(userId, password);
     if(isAuth){
         const result = await dbManager.updateUsername(userId, newUsername);
-        return result;
+        const reply = await dbManager.selectUserById(userId);
+        delete reply.password;
+        return reply;
     }else{
         throwError(403);
     }
@@ -74,11 +77,14 @@ async function changePassword(userId, newPassword, oldPassword){
     if(!userId || !newPassword){
         throwError(400);
     }
-    //Validate password - So we know it's the user and not someone in his session
-    if(validPassword(userId, oldPassword)){
+
+    const isAuth = await validPassword(userId, oldPassword);
+    if(isAuth){
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
         const result = await dbManager.updatePassword(userId, hashedPassword);
-        return result;
+        const reply = await dbManager.selectUserById(userId);
+        delete reply.password;
+        return reply;
     }else{
         throwError(403);
     }
@@ -103,27 +109,16 @@ async function wipeUserHistory(userId){
     }
 }
 
-async function deleteUser(userId, userToDelete, password){
-    try{
-        const isUser = await validPassword(userId, password);
-        if(!isUser){
-            throw new Error("Invalid credentials");
-        }
-
-        if(userId == userToDelete){
-            await wipeUserHistory(userToDelete);
-            return await dbManager.deleteUser(userToDelete);
-        }else{
-            if(dbManager.userIsAdmin(userId)){
-                await wipeUserHistory(userToDelete);
-                return await dbManager.deleteUser(userToDelete);
-            }
-            else{
-                throw new Error("Not authorized");
-            }
-        }
-    }catch(error){
-        return error.message;
+async function deleteUser(user, userToDelete, password){
+    const adminCheck = await dbManager.userIsAdmin(user.userId)
+    if(user.userId == userToDelete || adminCheck){
+        const isAuth = await validPassword(user.userId, password);
+        if(!isAuth){ throwError(401) }
+        await wipeUserHistory(userToDelete);
+        const result = await dbManager.deleteUser(userToDelete);
+        return result.affectedRows;
+    }else{
+        throwError(403);
     }
 }
 
