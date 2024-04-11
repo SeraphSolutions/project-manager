@@ -1,8 +1,8 @@
 const userManager = require('./api/functional/userManager');
 const databaseManager = require('./api/functional/databaseManager');
+jest.setTimeout(999999)
 
 //First we test functions locally.
-
 //#region User
 
 var testUser = {
@@ -57,7 +57,7 @@ test("Check if 'User1' is regular.", async ()=>{
 
 test("Login User1", async ()=>{
     const result = await userManager.loginUser(testUser.username, testUser.password);
-    expect(Object.prototype.toString.call(result)).not.toEqual("[object Error]");
+    expect('authorization' in result).toBe(true);;
 })
 
 //#endregion

@@ -2,8 +2,6 @@ const mysql = require('mysql2');
 const dotenv = require('dotenv');
 dotenv.config({path:__dirname+'/../.env'});
 
-
-
 const mysql2Credentials = {
   host: process.env.MYSQL_HOST,
   user: process.env.MYSQL_USER,
