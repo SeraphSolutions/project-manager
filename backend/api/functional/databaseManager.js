@@ -1,5 +1,6 @@
 const mysql = require('mysql2');
 const dotenv = require('dotenv');
+const { throwError } = require('../middleware/errorManager');
 dotenv.config({path:__dirname+'/../.env'});
 
 const mysql2Credentials = {
@@ -60,6 +61,14 @@ function defaultTaskValues(task){
   }
 }
 
+function checkEmpty(result){
+  if(result.length == 0){
+    let err = new Error("No results found");
+    err['statusCode'] = 404;
+    throw err;
+  }
+}
+
 //#endregion
 
 //#region User related functions
@@ -86,6 +95,7 @@ async function selectUsers() {
 
 async function selectUserById(id) {
   const [result] = await pool.query('SELECT * FROM User WHERE userId=?',[id]);
+  checkEmpty(result);
   return result;
 }
 
@@ -110,17 +120,23 @@ async function selectAssignedUser(taskId){
 
 async function updateUsername(userId, newUsername){
   const [result] = await pool.query('UPDATE User SET username=? WHERE userId=?',[newUsername, userId]);
-  return result;
+  const reply = await selectUserById(userId);
+  delete reply[0].password;
+  return reply;
 }
 
 async function updatePassword(userId, newPassword){
   const [result] = await pool.query('UPDATE User SET password=? WHERE userId=?',[newPassword, userId]);
-  return result;
+  const reply = await selectUserById(userId);
+  delete reply[0].password;
+  return reply;
 }
 
 async function updateAdmin(userId, value){
   const [result] = await pool.query('UPDATE User SET isAdmin=? WHERE userId=?',[value, userId]);
-  return result;
+  const reply = await selectUserById(userId);
+  delete reply[0].password;
+  return reply;
 }
 
 
