@@ -19,6 +19,9 @@ router.get('/', auth, async (req, res) => {
       else if(req.query['userId']){
         result = await dbManager.selectUserById(req.query['userId'])
       }
+      else{
+        throwError(400);
+      }
       delete result[0].password;
       res.status(200).json(result)
   }catch(err){
