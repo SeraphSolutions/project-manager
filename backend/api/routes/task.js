@@ -1,4 +1,7 @@
 const dbManager = require('../functional/databaseManager')
+const userManager = require('../functional/userManager');
+const { throwError } = require('../middleware/errorManager');
+
 const auth = require('../middleware/tokenAuth')
 
 const express = require('express');
@@ -8,34 +11,28 @@ router.use(express.json());
 //#region GET requests
 
 //Get specific or all tasks
-router.get('/', auth, (req, res) => {
-    (async function(){
-      //Requests specific task
-      if(req.query['id']){
-        const hasAccess = await dbManager.isAssigned(req.userData.userId, req.query['id']);
-        if(hasAccess || req.userData.isAdmin){
-          const result = await dbManager.selectTaskById(req.query['id']);
-          res.json(result);
-        }else{
-          res.status(401).json({
-            message: "Unauthorized access"
-          })
-        }
-      }
+router.get('/', auth, async (req, res) => {
+  try{
+    if(req.query['id']){
+      const hasAccess = await dbManager.isAssigned(req.userData.userId, req.query['id']);
+      const isAdmin = await userManager.isAdministrator(req.userData);
 
-      //Requests ALL tasks
-      else{
-        if(req.userData.isAdmin){
-          const result = await dbManager.selectAllTasks();
-          res.json(result);
-        }else{
-          res.status(401).json({
-            message: "Unauthorized access"
-          })
-        }
+      if(hasAccess || isAdmin){
+        const result = await dbManager.selectTaskById(req.query['id']);
+        res.json(result);
+      }else{
+        throwError(403);
       }
-    })();
+    }else{
+      throwError(400);
+    }
+  }
+  catch(err){
+    handleError(err);
+    res.status(err.statusCode).json(err.message);
+  }
 })
+
 //Get all tasks (and subtasks) assigned to user
 router.get('/user/', auth, (req, res) => {
   (async function(){

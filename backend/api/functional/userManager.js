@@ -5,6 +5,16 @@ const { throwError } = require('../middleware/errorManager.js');
 
 const saltRounds = 10;
 
+
+async function isAdministrator(userData){
+    if(userData.isAdmin){
+        const doubleCheck = await dbManager.userIsAdministrator(userData.userId);
+        if(doubleCheck){
+            return true;
+        }
+    }
+    return false;
+}
 async function validPassword(userId, password){
     try {
         const user = await dbManager.selectUserById(userId);
