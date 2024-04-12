@@ -1,5 +1,5 @@
 const dbManager = require('../functional/databaseManager')
-const userManager = require('../functional/userManager');
+const userManager = require('../functional/requestValidator');
 const { throwError } = require('../middleware/errorManager');
 
 const auth = require('../middleware/tokenAuth')

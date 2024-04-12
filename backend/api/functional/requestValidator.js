@@ -1,6 +1,6 @@
 const bcrypt = require('bcryptjs');
 const dbManager = require('./databaseManager.js');
-const tokenGen = require('../middleware/tokenGenerator')
+const tokenGen = require('../middleware/tokenGenerator.js')
 const { throwError } = require('../middleware/errorManager.js');
 
 const saltRounds = 10;
