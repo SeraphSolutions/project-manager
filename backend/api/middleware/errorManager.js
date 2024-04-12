@@ -1,6 +1,6 @@
 function handleError(err){
     if('statusCode' in err){
-
+        
     }else{
         err['statusCode'] = 500;
     }

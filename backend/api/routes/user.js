@@ -12,27 +12,15 @@ router.use(express.json());
 //Get user information.
 router.get('/', auth, async (req, res) => {
   try{
-    if(req.userData.isAdmin){
-
-      var result = undefined;
-      if(req.query['username']){
-          result = await dbManager.selectUserByName(req.query['username'])
-        }
-        else if(req.query['userId']){
-          result = await dbManager.selectUserById(req.query['userId'])
-        }
-        else{
-          result = await dbManager.selectUsers()
-        }
-
-        for(res of result){
-          delete res.password;
-        }
-        res.status(200).json(result)
-    
-      }else{
-      throwError(403);
-    }
+    var result = undefined;
+    if(req.query['username']){
+        result = await dbManager.selectUserByName(req.query['username'])
+      }
+      else if(req.query['userId']){
+        result = await dbManager.selectUserById(req.query['userId'])
+      }
+      delete result[0].password;
+      res.status(200).json(result)
   }catch(err){
     res.status(err.statusCode).json(err.message);
   }

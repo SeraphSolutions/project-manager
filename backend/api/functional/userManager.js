@@ -8,9 +8,8 @@ const saltRounds = 10;
 async function validPassword(userId, password){
     try {
         const user = await dbManager.selectUserById(userId);
-
         if (!user[0]) {
-            throw new Error("User not found");
+            throwError(404);
         }
 
         const passwordMatch = await bcrypt.compare(password, user[0]["password"]);
@@ -43,7 +42,6 @@ async function createUser(username, password) {
     delete reply.password;   
     return reply;
 };
-
 async function loginUser(username, password) {
     const user = await dbManager.selectUserByName(username);
     const loginResult = await validPassword(user[0].userId, password);
@@ -72,7 +70,6 @@ async function changeUsername(userId, newUsername, password){
         throwError(403);
     }
 };
-
 async function changePassword(userId, newPassword, oldPassword){
     if(!userId || !newPassword){
         throwError(400);
@@ -89,7 +86,6 @@ async function changePassword(userId, newPassword, oldPassword){
         throwError(403);
     }
 };
-
 async function wipeUserHistory(userId){
     const userTasks = await dbManager.selectAssignedTasks(userId);
     for(const task of userTasks){
@@ -108,7 +104,6 @@ async function wipeUserHistory(userId){
         }
     }
 }
-
 async function deleteUser(user, userToDelete, password){
     const adminCheck = await dbManager.userIsAdmin(user.userId)
     if(user.userId == userToDelete || adminCheck){
@@ -121,7 +116,6 @@ async function deleteUser(user, userToDelete, password){
         throwError(403);
     }
 }
-
 module.exports = {
     createUser,
     loginUser,
