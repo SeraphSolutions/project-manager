@@ -36,13 +36,7 @@ async function createUser(username, password) {
     if (!username || !password){
         throwError(400);
     }
-
-    //check if username already exists
-    const user = await dbManager.selectUserByName(username)
-    if (user[0]) {
-        throwError(409);
-    }
-
+    
     //hash password and insert data into database
     const hashedPassword = await bcrypt.hash(password, saltRounds);
     const result = await dbManager.insertUser(username, hashedPassword);

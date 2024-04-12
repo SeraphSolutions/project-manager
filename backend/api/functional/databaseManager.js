@@ -77,8 +77,14 @@ function checkEmpty(result){
 
 async function insertUser(username, password) {
   try {
-    const [result] = await pool.query('INSERT INTO User (username, password) VALUES (?, ?)', [username, password]);
-    return result;
+    const [exists] = await pool.query('SELECT * FROM User WHERE username=?',[username]);
+    if(exists[0]){
+      throwError(409);
+      
+    }else{
+      const [result] = await pool.query('INSERT INTO User (username, password) VALUES (?, ?)', [username, password]);
+      return result;
+    }
   } catch (error) {
     throw error;
   }
