@@ -13,13 +13,19 @@ router.use(express.json());
 //Get specific or all tasks
 router.get('/', auth, async (req, res) => {
   try{
+    const hasAccess = await requestValidator.hasAccess(req.userData.userId, req.query['id']);
+    const isAdmin = await requestValidator.isAdministrator(req.userData);
     if(req.query['id']){
-      const hasAccess = await requestValidator.hasAccess(req.userData.userId, req.query['id']);
-      const isAdmin = await requestValidator.isAdministrator(req.userData);
-
       if(hasAccess || isAdmin){
         const result = await requestValidator.selectTasks(req.query['id'], getSubtasks = false);
         res.json(result);
+      }else if(isAdmin){
+
+        //habria que chequear si nos conviene aca devolver todas las tareas si no proveen un id 
+        //y es admin
+
+        const result = await requestValidator.selectAllTasks()
+        res.json(result)
       }else{
         throwError(403);
       }
@@ -37,7 +43,7 @@ router.get('/', auth, async (req, res) => {
 router.get('/user/', auth, (req, res) => {
   (async function(){
     var result = await requestValidator.selectTasks(req.query['id'], getSubtasks = True);
-    
+
     //getSubtasks es para diferenciar en selectTasks si estamos buscando desde una root o todas,
     //eliminando tener dos funciones distintas para getTaskById y selectRootTask, todas se buscan x id
   
