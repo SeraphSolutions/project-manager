@@ -36,10 +36,12 @@ router.get('/', auth, async (req, res) => {
 //Get all tasks (and subtasks) assigned to user
 router.get('/user/', auth, (req, res) => {
   (async function(){
-    var result = [];
+    var result = await requestValidator.selectTasks(req.query['id'], getSubtasks = True);
     //getSubtasks es para diferenciar en selectTasks si estamos buscando desde una root o todas,
     //eliminando tener dos funciones distintas para getTaskById y selectRootTask, todas se buscan x id
-    const rootTasks = await requestValidator.selectTasks(req.query['id'], getSubtasks = True);
+    
+    
+    //const rootTasks = await requestValidator.selectTasks(req.query['id'], getSubtasks = True);
     /*for(task of rootTasks){
       result.push(task);
       const subtasks = await dbManager.selectSubtasks(task.taskId)
