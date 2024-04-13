@@ -1,5 +1,5 @@
-const dbManager = require('../functional/databaseManager')
-const userManager = require('../functional/requestValidator');
+//const dbManager = require('../functional/databaseManager')
+const requestValidator = require('../functional/requestValidator');
 const { throwError } = require('../middleware/errorManager');
 
 const auth = require('../middleware/tokenAuth')
@@ -10,15 +10,15 @@ router.use(express.json());
 
 //#region GET requests
 
-//Get specific tasks
+//Get specific or all tasks
 router.get('/', auth, async (req, res) => {
   try{
     if(req.query['id']){
-      const hasAccess = await dbManager.isAssigned(req.userData.userId, req.query['id']);
-      const isAdmin = await userManager.isAdministrator(req.userData);
+      const hasAccess = await requestValidator.hasAccess(req.userData.userId, req.query['id']);
+      const isAdmin = await requestValidator.isAdministrator(req.userData);
 
       if(hasAccess || isAdmin){
-        const result = await dbManager.selectTaskById(req.query['id']);
+        const result = await requestValidator.selectTasks(req.query['id'], getSubtasks = false);
         res.json(result);
       }else{
         throwError(403);
@@ -37,12 +37,14 @@ router.get('/', auth, async (req, res) => {
 router.get('/user/', auth, (req, res) => {
   (async function(){
     var result = [];
-    const rootTasks = await dbManager.selectAssignedTasks(req.query['id']);
-    for(task of rootTasks){
+    //getSubtasks es para diferenciar en selectTasks si estamos buscando desde una root o todas,
+    //eliminando tener dos funciones distintas para getTaskById y selectRootTask, todas se buscan x id
+    const rootTasks = await requestValidator.selectTasks(req.query['id'], getSubtasks = True);
+    /*for(task of rootTasks){
       result.push(task);
       const subtasks = await dbManager.selectSubtasks(task.taskId)
       result.push(subtasks);
-    }
+    }*/
   res.json(result);
   })();
 })
