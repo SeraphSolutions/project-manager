@@ -57,6 +57,8 @@ router.get('/user/', auth, (req, res) => {
   })();
 })
 
+
+//no deberia ser post??
 router.get('/create/', auth, (req, res) => {
   (async function(){
     const rootTaskValues={
