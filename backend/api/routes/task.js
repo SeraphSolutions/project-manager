@@ -10,7 +10,7 @@ router.use(express.json());
 
 //#region GET requests
 
-//Get specific or all tasks
+//Get specific tasks
 router.get('/', auth, async (req, res) => {
   try{
     if(req.query['id']){

@@ -5,7 +5,15 @@ const { throwError } = require('../middleware/errorManager.js');
 
 const saltRounds = 10;
 
+/*standard
+func:
+    !isAdmin:
+         !hasAccess:
+            throwError 403
+    CODE
+*/
 
+//#region Aux functions
 async function isAdministrator(userData){
     if(userData.isAdmin){
         const doubleCheck = await dbManager.userIsAdministrator(userData.userId);
@@ -21,7 +29,7 @@ async function validPassword(userId, password){
         if (!user[0]) {
             throwError(404);
         }
-
+        
         const passwordMatch = await bcrypt.compare(password, user[0]["password"]);
         await new Promise(resolve => setTimeout(resolve, 3000));
         return passwordMatch;
@@ -29,67 +37,8 @@ async function validPassword(userId, password){
     }catch(error){
         return false;
     }
-        
-}
-async function createUser(username, password) {
-    // validate data
-    if (!username || !password){
-        throwError(400);
-    }
     
-    //hash password and insert data into database
-    const hashedPassword = await bcrypt.hash(password, saltRounds);
-    const result = await dbManager.insertUser(username, hashedPassword);
-
-    //return created user
-    const reply = await dbManager.selectUserById(result.insertId); 
-    delete reply.password;   
-    return reply;
-};
-async function loginUser(username, password) {
-    const user = await dbManager.selectUserByName(username);
-    const loginResult = await validPassword(user[0].userId, password);
-    if(loginResult){
-        const key = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
-        const reply = {
-            authorization: 'Bearer '+ key
-        }
-        return reply;
-    }else{
-        throwError(401);
-    }
-};
-async function changeUsername(userId, newUsername, password){
-    if(userId == null || newUsername == null || password == null){
-        throwError(400);
-    }
-    //Validate password - So we know it's the user and not someone in his session
-    let isAuth = await validPassword(userId, password);
-    if(isAuth){
-        const result = await dbManager.updateUsername(userId, newUsername);
-        const reply = await dbManager.selectUserById(userId);
-        delete reply.password;
-        return reply;
-    }else{
-        throwError(403);
-    }
-};
-async function changePassword(userId, newPassword, oldPassword){
-    if(!userId || !newPassword){
-        throwError(400);
-    }
-
-    const isAuth = await validPassword(userId, oldPassword);
-    if(isAuth){
-        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-        const result = await dbManager.updatePassword(userId, hashedPassword);
-        const reply = await dbManager.selectUserById(userId);
-        delete reply.password;
-        return reply;
-    }else{
-        throwError(403);
-    }
-};
+}
 async function wipeUserHistory(userId){
     const userTasks = await dbManager.selectAssignedTasks(userId);
     for(const task of userTasks){
@@ -108,24 +57,108 @@ async function wipeUserHistory(userId){
         }
     }
 }
-async function deleteUser(user, userToDelete, password){
-    const adminCheck = await dbManager.userIsAdmin(user.userId)
-    if(user.userId == userToDelete || adminCheck){
-        const isAuth = await validPassword(user.userId, password);
-        if(!isAuth){ throwError(401) }
-        await wipeUserHistory(userToDelete);
-        const result = await dbManager.deleteUser(userToDelete);
-        return result.affectedRows;
-    }else{
-        throwError(403);
-    }
+async function hasAccess(userId, taskId){
+    //TODO
 }
+
+//#endregion
+
+//#region User section
+    
+    //#region VALIDATE
+    async function loginUser(username, password) {
+        const user = await dbManager.selectUserByName(username);
+        const loginResult = await validPassword(user[0].userId, password);
+        if(loginResult){
+            const key = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
+            const reply = {
+                authorization: 'Bearer '+ key
+            }
+            return reply;
+        }else{
+            throwError(401);
+        }
+    };
+    //#endregion
+
+    //#region CREATE
+    async function createUser(username, password) {
+        // validate data
+        if (!username || !password){
+            throwError(400);
+        }
+        
+        //hash password and insert data into database
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const result = await dbManager.insertUser(username, hashedPassword);
+    
+        //return created user
+        const reply = await dbManager.selectUserById(result.insertId); 
+        delete reply.password;   
+        return reply;
+    };
+    //#endregion
+
+    //#region CHANGE
+    async function changeUsername(userId, newUsername, password){
+        if(userId == null || newUsername == null || password == null){
+            throwError(400);
+        }
+        //Validate password - So we know it's the user and not someone in his session
+        let isAuth = await validPassword(userId, password);
+        if(isAuth){
+            const result = await dbManager.updateUsername(userId, newUsername);
+            const reply = await dbManager.selectUserById(userId);
+            delete reply.password;
+            return reply;
+        }else{
+            throwError(403);
+        }
+    };
+    async function changePassword(userId, newPassword, oldPassword){
+        if(!userId || !newPassword){
+            throwError(400);
+        }
+    
+        const isAuth = await validPassword(userId, oldPassword);
+        if(isAuth){
+            const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+            const result = await dbManager.updatePassword(userId, hashedPassword);
+            const reply = await dbManager.selectUserById(userId);
+            delete reply.password;
+            return reply;
+        }else{
+            throwError(403);
+        }
+    };
+    //#endregion
+
+    //#region DELETE
+    async function deleteUser(user, userToDelete, password){
+        const adminCheck = await dbManager.userIsAdmin(user.userId)
+        if(user.userId == userToDelete || adminCheck){
+            const isAuth = await validPassword(user.userId, password);
+            if(!isAuth){ throwError(401) }
+            await wipeUserHistory(userToDelete);
+            const result = await dbManager.deleteUser(userToDelete);
+            return result.affectedRows;
+        }else{
+            throwError(403);
+        }
+    }
+    
+    //#endregion
+    
+//#endregion
+
+//#region Task section
+//#endregion
+
+
 module.exports = {
     createUser,
     loginUser,
     changeUsername,
     changePassword,
-    validPassword,
-    deleteUser,
-    wipeUserHistory
+    deleteUser
 };
