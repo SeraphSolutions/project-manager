@@ -10,6 +10,7 @@ router.use(express.json());
 //#region GET requests
 
 //Get user information.
+//CHECK
 router.get('/', auth, async (req, res) => {
   try {  
     res = await requestValidator.getUserInfo(req);
@@ -86,6 +87,8 @@ router.patch('/change-password', auth, async (req, res) => {
   }
 })
 
+
+//CHECK
 router.patch('/change-privileges', auth, async (req, res) => {
   try{
     if(!req.user.isAdmin){

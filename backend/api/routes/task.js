@@ -10,6 +10,8 @@ router.use(express.json());
 
 //#region GET requests
 
+
+//CHECK
 //Get specific or all tasks
 router.get('/', auth, async (req, res) => {
   try{
@@ -39,6 +41,8 @@ router.get('/', auth, async (req, res) => {
   }
 })
 
+
+//CHECK
 //Get all tasks (and subtasks) assigned to user
 router.get('/user/', auth, (req, res) => {
   (async function(){
@@ -57,7 +61,7 @@ router.get('/user/', auth, (req, res) => {
   })();
 })
 
-
+//CHECK
 //no deberia ser post??
 router.get('/create/', auth, (req, res) => {
   (async function(){
