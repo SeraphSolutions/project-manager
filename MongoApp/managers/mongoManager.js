@@ -21,15 +21,24 @@ async function connect() {
 }
 
 async function createUser(username){
-    collection = client.db("project_manager").collection("User");
-    collection.insertOne({
+    collection = await client.db("project_manager").collection("User");
+    await collection.insertOne({
       username: username   
     })
 }
 
+async function getUser(username){
+  collection = await client.db("project_manager").collection("User");
+  result = await collection.findOne({
+    username: username   
+  })
+  return result;
+}
+
 async function testRun(){
   await connect();
-  await createUser('Santiago');
+  user = await getUser("Santiago");
+  console.log(user);
 }
 
 testRun();
