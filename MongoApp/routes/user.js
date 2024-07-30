@@ -18,7 +18,6 @@ router.post('/register', async (req, res) => {
     res.status(201).json(result);
   }
   catch(err){
-    handleError(err);
     res.status(err.statusCode).json(err.message);
   }
 })
