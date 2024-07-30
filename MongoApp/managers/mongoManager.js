@@ -20,7 +20,7 @@ async function connect() {
   }
 }
 
-async function createUser(username){
+async function addUser(username){
     collection = await client.db("project_manager").collection("User");
     await collection.insertOne({
       username: username   

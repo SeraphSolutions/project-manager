@@ -5,7 +5,7 @@ const auth = require('../managers/tokenManager')
 
 const express = require('express');
 const router = express.Router();
-router.use(express.json())
+router.use(express.json());
 
 //Create User
 router.post('/register', async (req, res) => {
