@@ -25,7 +25,7 @@ app.use(bodyParser.urlencoded({
 
 //define routes
 // app.use("/task", taskRoutes);
-// app.use("/user", userRoutes);
+app.use("/user", userRoutes);
 
 
 app.listen(PORT, function(err){
