@@ -11,39 +11,44 @@ router.use(express.json());
 
 //Get user information.
 router.get('/', auth, async (req, res) => {
-  try {  
-    res = await requestValidator.getUserInfo(req);
+  try {
+    result = await requestValidator.getUserInfo(req.user, undefined);
+    res.status(201).json(result);
   }catch(err) {
     res.status(err.statusCode).json(err.message);
   }
-/*try{
-    var result = undefined;
-    if(req.query['username']){
-        result = await dbManager.selectUserByName(req.query['username'])
-      }
-      else if(req.query['userId']){
-        result = await dbManager.selectUserById(req.query['userId'])
-      }
-      else{
-        throwError(400);
-      }
-      delete result[0].password;
-      res.status(200).json(result)
-  }catch(err){
-    res.status(err.statusCode).json(err.message);
-  }*/
 })
-router.get('/login', async (req, res) => {
+
+router.get('/:id', auth, async (req, res) => {
+  try {
+    result = await requestValidator.getUserInfo(req.user, req.params);
+    res.status(201).json(result);
+  }catch(err) {
+    res.status(err.statusCode).json(err.message);
+  }
+})
+
+router.get('/:username', auth, async (req, res) => {
+  try {
+    result = await requestValidator.getUserInfo(req.user, req.params);
+    res.status(201).json(result);
+  }catch(err) {
+    res.status(err.statusCode).json(err.message);
+  }
+})
+
+router.get('/login', auth, async (req, res) => {
   try{  
     const { username, password } = req.headers;
     var result = await requestValidator.loginUser(username, password);
     res.status(200).json(result)
   }
   catch(err){
+      console.log(err);
       handleError(err);
       res.status(err.statusCode).json(err.message);
-    }
-  })
+  }
+})
 //#endregion Get requests
 
 //#region POST requests

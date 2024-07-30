@@ -35,6 +35,7 @@ async function validPassword(userId, password){
         return passwordMatch;
         
     }catch(error){
+        console.log(error);
         return false;
     }
     
@@ -58,17 +59,33 @@ async function wipeUserHistory(userId){
     }
 }
 async function hasAccess(userId, taskId){
-    //TODO
+    assigned = dbManager.selectAssignedUser(taskId);
+    print(assigned);
 }
 
 //#endregion
 
 //#region User section
     
+    async function getUserInfo(sender, user){
+        if(isAdministrator(sender)){
+            if(user['username']){
+                [result] = await dbManager.selectUserByName(user['username']);
+                return result;
+            }else if(user['id']){
+                [result] = await dbManager.selectUserByName(user['id']);
+                return result;
+            }
+        [result] = await dbManager.selectUsers();
+        return result;
+        }
+    }
+
     //#region VALIDATE
     async function loginUser(username, password) {
         const user = await dbManager.selectUserByName(username);
         const loginResult = await validPassword(user[0].userId, password);
+        console.log(loginResult);
         if(loginResult){
             const key = tokenGen.generateToken(user[0].userId, user[0].isAdmin);
             const reply = {
@@ -91,7 +108,7 @@ async function hasAccess(userId, taskId){
         //hash password and insert data into database
         const hashedPassword = await bcrypt.hash(password, saltRounds);
         const result = await dbManager.insertUser(username, hashedPassword);
-    
+        console.log("Created user")
         //return created user
         const reply = await dbManager.selectUserById(result.insertId); 
         delete reply.password;   
