@@ -3,6 +3,8 @@ const bcrypt = require('bcryptjs');
 const { handleError, throwError } = require('../managers/errorManager');
 const {generateToken} = require("./tokenManager")
 
+//#region USER ROUTE FUNCTIONS
+
 //#region Tokenless functions
 async function createUser(username, password){
     const userExists = await mongoManager.getUser(username);
@@ -10,8 +12,7 @@ async function createUser(username, password){
         throwError(409);
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    mongoManager.
-    addUser(username, hashedPassword);
+    mongoManager.addUser(username, hashedPassword);
 }
 async function loginUser(username, password){
     const user = await mongoManager.getUser(username);
@@ -23,7 +24,7 @@ async function loginUser(username, password){
     if(!passwordMatch){
         throwError(401);
     }
-    return(generateToken(user.username, user.isAdmin))
+    return(generateToken(user.username, user._id, user.isAdmin))
 }
 //#endregion
 
@@ -51,4 +52,15 @@ async function getAllUsers(token){
 }
 //#endregion
 
-module.exports = {createUser, loginUser, getUser, getAllUsers}
+//#endregion
+
+//#region TASK ROUTE FUNCTIONS
+
+async function createTask(token, title, description, deadline){
+    const taskId = await mongoManager.addTask(token.userId, title, description, deadline);
+    await mongoManager.assignToTask(token.userId, taskId);
+    return taskId;
+}
+
+//#endregion
+module.exports = {createUser, loginUser, getUser, getAllUsers, createTask}

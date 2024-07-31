@@ -51,6 +51,7 @@ router.get('/:username', auth, async (req, res) => {
     }
 })
 
+//Get all users
 router.get('/', auth, async (req, res) => {
   try{
     result = await requestManager.getAllUsers(req.userData)
@@ -60,5 +61,7 @@ router.get('/', auth, async (req, res) => {
       res.status(err.statusCode).json(err.message);
     }
 })
+
+
 
 module.exports = router;

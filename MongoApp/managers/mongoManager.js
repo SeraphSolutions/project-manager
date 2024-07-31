@@ -1,4 +1,4 @@
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
 const uri = "mongodb+srv://santiagopapa:s3rwpw8r9@seraph.9kcw72x.mongodb.net/?retryWrites=true&w=majority&appName=seraph";
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -24,7 +24,8 @@ async function addUser(username, hashedPassword){
     await collection.insertOne({
       username: username,   
       hashedPassword: hashedPassword,
-      isAdmin: false
+      isAdmin: false,
+      assignedTasks: []
     })
 }
 
@@ -43,6 +44,29 @@ async function getAllUsers(){
   return documents;
 }
 
+async function assignToTask(userId, taskId){
+  collection = await client.db("project_manager").collection("User");
+  const result = await collection.updateOne(
+    { _id: new ObjectId(userId)},
+    { $push: { assignedTasks: taskId } }
+  );
+}
+
 //#endregion
 
-module.exports = {addUser, getUser, getAllUsers}
+//#region Task Functions
+
+async function addTask(userId, title, description, deadline){
+  collection = await client.db("project_manager").collection("Task");
+  const taskId = await collection.insertOne({
+      creator: new ObjectId(userId),
+      title: title,
+      description: description,
+      deadline: deadline
+    })
+    return taskId.insertedId;
+}
+
+//#endregion
+
+module.exports = {addUser, getUser, getAllUsers, addTask, assignToTask}

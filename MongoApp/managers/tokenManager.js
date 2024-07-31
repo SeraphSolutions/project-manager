@@ -4,8 +4,8 @@ const { handleError, throwError } = require('../managers/errorManager');
 dotenv.config({path:__dirname+'/../.env'})
 const key = process.env.JWS_SECRET
 
-function generateToken(username, isAdmin = false) {
-    const token = jwt.sign({username, isAdmin}, key, {expiresIn: '2h'});
+function generateToken(username, userId, isAdmin = false) {
+    const token = jwt.sign({username, userId, isAdmin}, key, {expiresIn: '2h'});
     return token;
 }
 

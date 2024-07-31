@@ -23,7 +23,7 @@ app.use(bodyParser.json());
 //endpoint format: app.TYPE(route, auth(optional if protected), arrow func)
 
 //define routes
-// app.use("/task", taskRoutes);
+app.use("/task", taskRoutes);
 app.use("/user", userRoutes);
 
 
