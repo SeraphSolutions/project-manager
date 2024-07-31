@@ -9,21 +9,21 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   }
 });
-
-async function connect() {
-  try {
-    await client.connect();
-    await client.db("project_manager").command({ ping: 1 });
-    console.log("You successfully connected to MongoDB!");
-  } catch(err) {
-    await client.close();
-  }
+var database = undefined;
+try{
+  client.connect();
+  database = client.db("project_manager"); 
+}catch(err) {
+  client.close();
 }
 
-async function addUser(username){
+//#REGION User Functions
+
+async function addUser(username, hashedPassword){
     collection = await client.db("project_manager").collection("User");
     await collection.insertOne({
-      username: username   
+      username: username,   
+      hashedPassword: hashedPassword
     })
 }
 
@@ -35,10 +35,6 @@ async function getUser(username){
   return result;
 }
 
-async function testRun(){
-  await connect();
-  user = await getUser("Santiago");
-  console.log(user);
-}
+//#endregion
 
-testRun();
+module.exports = {addUser, getUser}

@@ -17,9 +17,8 @@ app.use(cors({
 }));
 
 //To read data from request body
-app.use(bodyParser.urlencoded({
-  extended: true
-}));
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
 
 //endpoint format: app.TYPE(route, auth(optional if protected), arrow func)
 

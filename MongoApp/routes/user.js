@@ -1,4 +1,3 @@
-//const dbManager = require('../functional/databaseManager')
 const requestManager = require('../managers/requestManager');
 const { handleError, throwError } = require('../managers/errorManager');
 const auth = require('../managers/tokenManager')
@@ -10,7 +9,7 @@ router.use(express.json());
 //Create User
 router.post('/register', async (req, res) => {
   try{
-    const { username, password } = req.body;
+    const {username, password} = req.body;
     if(!username || !password){
         throwError(400);
     }
