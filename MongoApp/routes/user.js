@@ -1,6 +1,6 @@
 const requestManager = require('../managers/requestManager');
 const { handleError, throwError } = require('../managers/errorManager');
-const auth = require('../managers/tokenManager')
+const {auth} = require('../managers/tokenManager')
 
 const express = require('express');
 const router = express.Router();
@@ -22,5 +22,43 @@ router.post('/register', async (req, res) => {
   }
 })
 
+//Login user
+router.get('/login', async (req, res) => {
+  try{
+    const {username, password} = req.body;
+    if(!username || !password){
+      throwError(400);
+    }
+    result = await requestManager.loginUser(username, password)
+    res.status(200).json(result);
+  }catch(err){
+      handleError(err);
+      res.status(err.statusCode).json(err.message);
+    }
+})
+
+//Get user
+router.get('/:username', auth, async (req, res) => {
+  try{
+    if(!req.params.username){
+      throwError(400)
+    }
+    result = await requestManager.getUser(req.userData, req.params.username)
+    res.status(200).json(result);
+  }catch(err){
+      handleError(err);
+      res.status(err.statusCode).json(err.message);
+    }
+})
+
+router.get('/', auth, async (req, res) => {
+  try{
+    result = await requestManager.getAllUsers(req.userData)
+    res.status(200).json(result);
+  }catch(err){
+      handleError(err);
+      res.status(err.statusCode).json(err.message);
+    }
+})
 
 module.exports = router;
