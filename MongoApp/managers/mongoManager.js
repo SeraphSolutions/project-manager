@@ -23,8 +23,10 @@ async function hasAccessToTask(userId, taskId){
   const user = await collection.findOne({
     _id: new ObjectId(userId)
   })
-  if(user.assignedTasks.includes(taskId)){
-    return true;
+  for(task of user.assignedTasks){
+    if(task.toString() == taskId){
+      return true;
+    }
   }
   return false;
 }

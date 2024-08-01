@@ -22,5 +22,20 @@ router.post('/create', auth, async (req, res) => {
   }
 })
 
+//Create Task
+router.get('/:taskId', auth, async (req, res) => {
+  try{
+    const {taskId} = req.params;
+    if(!taskId){
+        throwError(400);
+    }
+    result = await requestManager.getTask(req.userData, taskId);
+    res.status(201).json(result);
+  }
+  catch(err){
+    handleError(err);
+    res.status(err.statusCode).json(err.message);
+  }
+})
 
 module.exports = router;

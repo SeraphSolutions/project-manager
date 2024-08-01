@@ -65,6 +65,15 @@ async function assignUserToTask(token, userToAssign, taskId){
 
 //#region TASK ROUTE FUNCTIONS
 
+async function getTask(token, taskId){
+    const hasAccess = await mongoManager.hasAccessToTask(token.userId, taskId);
+    if(!hasAccess){
+        throwError(401);
+    }
+    const task = await mongoManager.getTask(taskId);
+    return task;
+}
+
 async function createTask(token, title, description, deadline){
     const taskId = await mongoManager.addTask(token.userId, title, description, deadline);
     await mongoManager.assignToTask(token.userId, taskId);
@@ -72,4 +81,4 @@ async function createTask(token, title, description, deadline){
 }
 
 //#endregion
-module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, assignUserToTask}
+module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, getTask, assignUserToTask}
