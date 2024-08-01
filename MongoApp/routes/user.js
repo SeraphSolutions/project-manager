@@ -44,6 +44,7 @@ router.get('/:username', auth, async (req, res) => {
       throwError(400)
     }
     result = await requestManager.getUser(req.userData, req.params.username)
+    delete result['hashedPassword'];
     res.status(200).json(result);
   }catch(err){
       handleError(err);
@@ -55,12 +56,31 @@ router.get('/:username', auth, async (req, res) => {
 router.get('/', auth, async (req, res) => {
   try{
     result = await requestManager.getAllUsers(req.userData)
+    result = result.forEach(user => {
+      delete user['hashedPassword'];
+    });
     res.status(200).json(result);
   }catch(err){
       handleError(err);
       res.status(err.statusCode).json(err.message);
     }
 })
+
+//Assigns User To Task
+router.get('/:username/assign/:taskId', auth, async (req, res) => {
+  try{
+    const {taskId, username} = req.params;
+    if(!username || !taskId){
+      throwError(400)
+    }
+    result = await requestManager.assignUserToTask(req.userData, username, taskId);
+    res.status(200).json(result);
+  }catch(err){
+      handleError(err);
+      res.status(err.statusCode).json(err.message);
+    }
+})
+
 
 
 

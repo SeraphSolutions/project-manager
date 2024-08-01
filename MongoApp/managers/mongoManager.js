@@ -17,6 +17,31 @@ try{
   client.close();
 }
 
+//#region Utility Functions
+async function hasAccessToTask(userId, taskId){
+  collection = await client.db("project_manager").collection("User");
+  const user = await collection.findOne({
+    _id: new ObjectId(userId)
+  })
+  if(user.assignedTasks.includes(taskId)){
+    return true;
+  }
+  return false;
+}
+
+async function isTaskOwner(userId, taskId){
+  collection = await client.db("project_manager").collection("Task");
+  const task = await collection.findOne({
+    _id: new ObjectId(taskId)
+  })
+  if(task.creator.toString() == userId){
+    return true;
+  }
+  return false;
+}
+
+//#endregion
+
 //#region User Functions
 
 async function addUser(username, hashedPassword){
@@ -48,13 +73,21 @@ async function assignToTask(userId, taskId){
   collection = await client.db("project_manager").collection("User");
   const result = await collection.updateOne(
     { _id: new ObjectId(userId)},
-    { $push: { assignedTasks: taskId } }
+    { $push: { assignedTasks: new ObjectId(taskId) } }
   );
 }
 
 //#endregion
 
 //#region Task Functions
+
+async function getTask(taskId){
+  collection = await client.db("project_manager").collection("Task");
+  result = await collection.findOne({
+    _id: new ObjectId(taskId)   
+  })
+  return result;
+}
 
 async function addTask(userId, title, description, deadline){
   collection = await client.db("project_manager").collection("Task");
@@ -64,9 +97,9 @@ async function addTask(userId, title, description, deadline){
       description: description,
       deadline: deadline
     })
-    return taskId.insertedId;
+    return taskId.insertedId.toString();
 }
 
 //#endregion
 
-module.exports = {addUser, getUser, getAllUsers, addTask, assignToTask}
+module.exports = {addUser, getUser, getAllUsers, addTask, getTask, assignToTask, isTaskOwner, hasAccessToTask}

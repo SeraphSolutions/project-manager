@@ -6,7 +6,7 @@ const express = require('express');
 const router = express.Router();
 router.use(express.json());
 
-//Create User
+//Create Task
 router.post('/create', auth, async (req, res) => {
   try{
     const {title, description, deadline} = req.body;
