@@ -1,5 +1,5 @@
 const request = require('supertest');
-const app = require('../../App'); 
+const app = require('@App'); 
 //No need to mock since requests won't reach the database
 
 let server;

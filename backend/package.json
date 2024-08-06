@@ -24,6 +24,10 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@managers/(.*)$": "<rootDir>/managers/$1",
+      "^@App$": "<rootDir>/App.js"
+    },
     "coveragePathIgnorePatterns": [
       "/node_modules/"
     ]
