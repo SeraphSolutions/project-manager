@@ -1,7 +1,7 @@
 const requestManager = require('../managers/requestManager');
 const { handleError } = require('../managers/errorManager');
-const { validateUsername, validatePassword, handleValidationErrors } = require('../managers/validationManager');
-const {auth} = require('../managers/tokenManager')
+const { validateBodyUsername, validateBodyPassword, validateParameterUsername, handleValidationErrors } = require('../managers/validationManager');
+const {validateAuthorization} = require('../managers/tokenManager')
 
 const express = require('express');
 const { route } = require('./task');
@@ -10,8 +10,8 @@ router.use(express.json());
 
 //Create User
 router.post('/register',
-  validateUsername,
-  validatePassword,
+  validateBodyUsername,
+  validateBodyPassword,
   handleValidationErrors,
   async (req, res) => {
   try{
@@ -31,9 +31,10 @@ router.post('/register',
 
 //Login user
 router.get('/login',
-  validateUsername,
-  validatePassword,
-  handleValidationErrors, async (req, res) => {
+  validateBodyUsername,
+  validateBodyPassword,
+  handleValidationErrors,
+  async (req, res) => {
   try{
     const {username, password} = req.body;
     const token = await requestManager.loginUser(username, password)
@@ -43,16 +44,17 @@ router.get('/login',
     });
   }catch(err){
       handleError(err);
-      console.log(err.message);
       res.status(err.statusCode).json(err);
     }
 })
 
 //Get user
-router.get('/:username', auth, async (req, res) => {
+router.get('/:username',
+  validateAuthorization,
+  validateParameterUsername,
+  handleValidationErrors,
+  async (req, res) => {
   try{
-    validateNullFields([req.params.username]);
-    validateFieldTypes([req.params.username], [String]);
     result = await requestManager.getUser(req.userData, req.params.username)
     delete result['hashedPassword'];
     res.status(200).json(result);
@@ -63,7 +65,7 @@ router.get('/:username', auth, async (req, res) => {
 })
 
 //Get all users
-router.get('/', auth, async (req, res) => {
+router.get('/', validateAuthorization, async (req, res) => {
   try{
     result = await requestManager.getAllUsers(req.userData)
     result = result.forEach(user => {
@@ -77,7 +79,7 @@ router.get('/', auth, async (req, res) => {
 })
 
 //Assigns User To Task
-router.get('/:username/assign/:taskId', auth, async (req, res) => {
+router.get('/:username/assign/:taskId', validateAuthorization, async (req, res) => {
   try{
     const {taskId, username} = req.params;
     validateNullFields([username, taskId]);
@@ -91,7 +93,7 @@ router.get('/:username/assign/:taskId', auth, async (req, res) => {
 })
 
 //Unassign User to task
-router.get('/:username/unassign/:taskId', auth, async (req, res) => {
+router.get('/:username/unassign/:taskId', validateAuthorization, async (req, res) => {
   try{
     const {taskId, username} = req.params;
     validateNullFields([username, taskId]);
@@ -105,7 +107,7 @@ router.get('/:username/unassign/:taskId', auth, async (req, res) => {
 })
 
 //Delete User
-router.delete('/:username', async (req, res) => {
+router.delete('/:username', validateAuthorization, async (req, res) => {
   try{
     const {username} = req.body;
     validateNullFields([username]);

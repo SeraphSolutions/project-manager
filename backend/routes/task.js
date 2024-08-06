@@ -1,14 +1,14 @@
 const requestManager = require('../managers/requestManager');
 const { handleError } = require('../managers/errorManager');
 const { validateNullFields, validateFieldTypes, validateFieldValueType } = require('../managers/validationManager');
-const {auth} = require('../managers/tokenManager')
+const {validateAuthorization} = require('../managers/tokenManager')
 
 const express = require('express');
 const router = express.Router();
 router.use(express.json());
 
 //Create Task
-router.post('/create', auth, async (req, res) => {
+router.post('/create', validateAuthorization, async (req, res) => {
   try{
     const {title, description, deadline} = req.body;
     validateNullFields([title, description, deadline])
@@ -23,7 +23,7 @@ router.post('/create', auth, async (req, res) => {
 })
 
 //Create Task
-router.get('/:taskId', auth, async (req, res) => {
+router.get('/:taskId', validateAuthorization, async (req, res) => {
   try{
     const {taskId} = req.params;
     validateNullFields([taskId]);
@@ -38,7 +38,7 @@ router.get('/:taskId', auth, async (req, res) => {
 })
 
 //Update Task
-router.patch('/:taskId/:taskField', auth, async (req, res) => {
+router.patch('/:taskId/:taskField', validateAuthorization, async (req, res) => {
   try{
     const {taskId, taskField} = req.params;
     const {fieldValue} = req.body;

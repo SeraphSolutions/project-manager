@@ -1,32 +1,39 @@
 const { throwError } = require('../managers/errorManager');
-const { body, validationResult } = require('express-validator');
+const { body, param, validationResult } = require('express-validator');
 
-const validateUsername = [
+const validateBodyUsername = [
     body('username')
         .exists()
         .isString()
         .notEmpty(),
 ];
 
-const validatePassword = [
+const validateBodyPassword = [
     body('password')
         .exists()
         .isString()
         .notEmpty(),
 ];
 
-
+const validateParameterUsername = [
+    param('username')
+        .exists()
+        .isString()
+        .notEmpty(),
+];
 
 const handleValidationErrors = (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
         throwError(400);
+        return res.status(400).json({ errors: errors.array() });
     }
     next();
 };
 
 module.exports = {
-    validateUsername,
-    validatePassword,
+    validateBodyUsername,
+    validateBodyPassword,
+    validateParameterUsername,
     handleValidationErrors
 };

@@ -9,7 +9,7 @@ function generateToken(username, userId, isAdmin = false) {
     return token;
 }
 
-const auth = (req, res, next) => {
+const validateAuthorization = (req, res, next) => {
     try {
         if(!req.headers.authorization){
             throwError(400);
@@ -24,5 +24,5 @@ const auth = (req, res, next) => {
 };
 
 module.exports = {
-    generateToken, auth, 
+    generateToken, validateAuthorization, 
 }
