@@ -1,7 +1,7 @@
 const request = require('supertest');
-const app = require('../App'); 
-const mongoDb = require('../managers/mongoManager');
-jest.mock('../managers/mongoManager');
+const app = require('../../App'); 
+const mongoDb = require('../../managers/mongoManager');
+jest.mock('../../managers/mongoManager');
 
 let server;
 
