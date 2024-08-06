@@ -90,5 +90,11 @@ async function createTask(token, title, description, deadline){
     return taskId;
 }
 
+async function updateTask(token, taskId, field, value){
+    const taskId = await mongoManager.addTask(token.userId, title, description, deadline);
+    await mongoManager.assignToTask(token.userId, taskId);
+    return taskId;
+}
+
 //#endregion
-module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, getTask, assignUserToTask, unassignUserToTask}
+module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, getTask, assignUserToTask, unassignUserToTask, updateTask}

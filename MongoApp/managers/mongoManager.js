@@ -110,6 +110,14 @@ async function addTask(userId, title, description, deadline){
     return taskId.insertedId.toString();
 }
 
+async function updateTask(taskId, field, value){
+  collection = await client.db("project_manager").collection("Task");
+  result = await collection.findOne({
+    _id: new ObjectId(taskId)   
+  })
+  return result;
+}
+
 //#endregion
 
 module.exports = {addUser, getUser, getAllUsers, addTask, getTask, assignToTask, unassignToTask, isTaskOwner, hasAccessToTask}

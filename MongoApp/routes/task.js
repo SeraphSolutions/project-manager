@@ -1,5 +1,6 @@
 const requestManager = require('../managers/requestManager');
-const { handleError, throwError } = require('../managers/errorManager');
+const { handleError } = require('../managers/errorManager');
+const { validateNullFields, validateFieldTypes, validateFieldValueType } = require('../managers/validationManager');
 const {auth} = require('../managers/tokenManager')
 
 const express = require('express');
@@ -10,9 +11,8 @@ router.use(express.json());
 router.post('/create', auth, async (req, res) => {
   try{
     const {title, description, deadline} = req.body;
-    if(!title){
-        throwError(400);
-    }
+    validateNullFields([title, description, deadline])
+    validateFieldTypes([title, description, deadline], [String, String, Date]);
     result = await requestManager.createTask(req.userData, title, description, deadline);
     res.status(201).json(result);
   }
@@ -26,9 +26,8 @@ router.post('/create', auth, async (req, res) => {
 router.get('/:taskId', auth, async (req, res) => {
   try{
     const {taskId} = req.params;
-    if(!taskId){
-        throwError(400);
-    }
+    validateNullFields([taskId]);
+    validateFieldTypes([taskId], [Number]);
     result = await requestManager.getTask(req.userData, taskId);
     res.status(201).json(result);
   }
@@ -37,5 +36,22 @@ router.get('/:taskId', auth, async (req, res) => {
     res.status(err.statusCode).json(err.message);
   }
 })
+
+//Update Task
+router.patch('/:taskId/:taskField', auth, async (req, res) => {
+  try{
+    const {taskId, taskField} = req.params;
+    const {fieldValue} = req.body;
+    validateNullFields([taskId, taskField, fieldValue]);
+    validateFieldTypes([taskId, taskField], [Number, String]);
+    validateFieldValueType(taskField, fieldValue);
+    result = await requestManager.updateTask(req.userData, taskId, taskField, fieldValue);
+    res.status(201).json(result);
+  }
+  catch(err){
+    handleError(err);
+    res.status(err.statusCode).json(err.message);
+  }
+});
 
 module.exports = router;

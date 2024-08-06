@@ -1,5 +1,6 @@
 const requestManager = require('../managers/requestManager');
 const { handleError, throwError } = require('../managers/errorManager');
+const { validateNullFields, validateFieldTypes, validateFieldValueType } = require('../managers/validationManager');
 const {auth} = require('../managers/tokenManager')
 
 const express = require('express');
@@ -10,9 +11,8 @@ router.use(express.json());
 router.post('/register', async (req, res) => {
   try{
     const {username, password} = req.body;
-    if(!username || !password){
-        throwError(400);
-    }
+    validateNullFields([username, password]);
+    validateFieldTypes([username, password], [String, String]);
     result = await requestManager.createUser(username, password)
     res.status(201).json(result);
   }
@@ -26,9 +26,8 @@ router.post('/register', async (req, res) => {
 router.get('/login', async (req, res) => {
   try{
     const {username, password} = req.body;
-    if(!username || !password){
-      throwError(400);
-    }
+    validateNullFields([username, password]);
+    validateFieldTypes([username, password], [String, String]);
     result = await requestManager.loginUser(username, password)
     res.status(200).json(result);
   }catch(err){
@@ -40,9 +39,8 @@ router.get('/login', async (req, res) => {
 //Get user
 router.get('/:username', auth, async (req, res) => {
   try{
-    if(!req.params.username){
-      throwError(400)
-    }
+    validateNullFields([req.params.username]);
+    validateFieldTypes([req.params.username], [String]);
     result = await requestManager.getUser(req.userData, req.params.username)
     delete result['hashedPassword'];
     res.status(200).json(result);
@@ -70,9 +68,8 @@ router.get('/', auth, async (req, res) => {
 router.get('/:username/assign/:taskId', auth, async (req, res) => {
   try{
     const {taskId, username} = req.params;
-    if(!username || !taskId){
-      throwError(400)
-    }
+    validateNullFields([username, taskId]);
+    validateFieldTypes([username, taskId], [String, Number]);
     result = await requestManager.assignUserToTask(req.userData, username, taskId);
     res.status(200).json(result);
   }catch(err){
@@ -85,9 +82,8 @@ router.get('/:username/assign/:taskId', auth, async (req, res) => {
 router.get('/:username/unassign/:taskId', auth, async (req, res) => {
   try{
     const {taskId, username} = req.params;
-    if(!username || !taskId){
-      throwError(400)
-    }
+    validateNullFields([username, taskId]);
+    validateFieldTypes([username, taskId], [String, Number]);
     result = await requestManager.unassignUserToTask(req.userData, username, taskId);
     res.status(200).json(result);
   }catch(err){

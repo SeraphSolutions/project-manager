@@ -25,10 +25,17 @@ function throwError(code){
         case(409):
             err.message = 'Already exists.';
             break;
+        case(500):
+            err.message = 'Internal server error.';
+            break;
     }
     throw err;
 }
 
+function validateFields(fields){
+    fields.forEach(field => !field ? throwError(400) : true)
+}
+
 module.exports = {
-    throwError, handleError,
+    throwError, handleError, validateFields,
 }
