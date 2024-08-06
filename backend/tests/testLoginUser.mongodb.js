@@ -6,4 +6,3 @@ const usrnm = "SantiTest";
 const user = db.getCollection('User').find({username: usrnm});
 
 console.log(user)
-  

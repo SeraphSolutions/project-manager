@@ -1,2 +1,2 @@
-use('project_mamanger');
+use('project_manager');
 console.log(db.getCollection("User"));
