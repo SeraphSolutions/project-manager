@@ -1,27 +1,29 @@
-const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
+const { MongoClient, ObjectId } = require('mongodb');
+
 const dotenv = require('dotenv')
 dotenv.config({path:__dirname+'/../.env'})
 const uri = process.env.MONGO_URI;
 
-// Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-  serverApi: {
-    version: ServerApiVersion.v1,
-    strict: true,
-    deprecationErrors: true,
+let client;
+let db;
+
+async function connectToDatabase() {
+  if (!client) {
+      client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+      await client.connect();
+      db = client.db('your-database-name');
   }
-});
-var database = undefined;
-try{
-  client.connect();
-  database = client.db("project_manager"); 
-}catch(err) {
-  client.close();
+  return db;
+}
+
+async function getCollection(collectionName) {
+  const db = await connectToDatabase();
+  return db.collection(collectionName);
 }
 
 //#region Utility Functions
 async function hasAccessToTask(userId, taskId){
-  collection = await client.db("project_manager").collection("User");
+  const collection = await getCollection("User");
   const user = await collection.findOne({
     _id: new ObjectId(userId)
   })
@@ -34,7 +36,7 @@ async function hasAccessToTask(userId, taskId){
 }
 
 async function isTaskOwner(userId, taskId){
-  collection = await client.db("project_manager").collection("Task");
+  const collection = await getCollection("Task");
   const task = await collection.findOne({
     _id: new ObjectId(taskId)
   })
@@ -49,7 +51,7 @@ async function isTaskOwner(userId, taskId){
 //#region User Functions
 
 async function addUser(username, hashedPassword){
-    collection = await client.db("project_manager").collection("User");
+    const collection = await getCollection("User");
     return await collection.insertOne({
       username: username,   
       hashedPassword: hashedPassword,
@@ -59,7 +61,7 @@ async function addUser(username, hashedPassword){
 }
 
 async function getUser(username){
-  collection = await client.db("project_manager").collection("User");
+  const collection = await getCollection("User");
   result = await collection.findOne({
     username: username   
   })
@@ -67,14 +69,14 @@ async function getUser(username){
 }
 
 async function getAllUsers(){
-  collection = await client.db("project_manager").collection("User");
+  const collection = await getCollection("User");
   result = await collection.find({})
   const documents = await result.toArray();
   return documents;
 }
 
 async function assignToTask(userId, taskId){
-  collection = await client.db("project_manager").collection("User");
+  const collection = await getCollection("User");
   const result = await collection.updateOne(
     { _id: new ObjectId(userId)},
     { $push: { assignedTasks: new ObjectId(taskId) } }
@@ -82,7 +84,7 @@ async function assignToTask(userId, taskId){
 }
 
 async function unassignToTask(userId, taskId){
-  collection = await client.db("project_manager").collection("User");
+  const collection = await getCollection("User");
   const result = await collection.updateOne(
     { _id: new ObjectId(userId)},
     { $pull: { assignedTasks: new ObjectId(taskId) } }
@@ -90,6 +92,7 @@ async function unassignToTask(userId, taskId){
 }
 
 async function makeUserAdmin(userId) {
+    const collection = await getCollection("User");
     const result = await collection.updateOne(
       { _id: new ObjectId(userId) },
       {
@@ -98,7 +101,7 @@ async function makeUserAdmin(userId) {
 }
 
 async function deleteUser(userId) {
-  collection = await client.db("project_manager").collection("User");
+  const collection = await getCollection("User");
   const result = await collection.deleteOne(
     { _id: userId }
   );
@@ -109,7 +112,7 @@ async function deleteUser(userId) {
 //#region Task Functions
 
 async function getTask(taskId){
-  collection = await client.db("project_manager").collection("Task");
+  const collection = await getCollection("Task");
   result = await collection.findOne({
     _id: new ObjectId(taskId)   
   })
@@ -117,7 +120,7 @@ async function getTask(taskId){
 }
 
 async function addTask(userId, title, description, deadline){
-  collection = await client.db("project_manager").collection("Task");
+  const collection = await getCollection("Task");
   const taskId = await collection.insertOne({
       creator: new ObjectId(userId),
       title: title,
@@ -128,7 +131,7 @@ async function addTask(userId, title, description, deadline){
 }
 
 async function updateTask(taskId, field, value){
-  collection = await client.db("project_manager").collection("Task");
+  const collection = await getCollection("Task");
   result = await collection.findOne({
     _id: new ObjectId(taskId)   
   })

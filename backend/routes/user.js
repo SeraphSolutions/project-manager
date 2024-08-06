@@ -1,6 +1,6 @@
 const requestManager = require('../managers/requestManager');
 const { handleError } = require('../managers/errorManager');
-const { validateNullFields, validateFieldTypes, validateFieldValueType } = require('../managers/validationManager');
+const { validateNullFields, validateFieldTypes } = require('../managers/validationManager');
 const {auth} = require('../managers/tokenManager')
 
 const express = require('express');
@@ -13,9 +13,11 @@ router.post('/register', async (req, res) => {
   try{
     const {username, password} = req.body;
     validateNullFields([username, password]);
-    // validateFieldTypes([username, password], [String, String]);
+    validateFieldTypes([username, password], [String, String]);
     result = await requestManager.createUser(username, password)
-    res.status(201).json({message: 'Created.'});
+    res.status(201).json({
+      message: 'Created.'
+    });
   }
   catch(err){
     handleError(err);
@@ -29,8 +31,11 @@ router.get('/login', async (req, res) => {
     const {username, password} = req.body;
     validateNullFields([username, password]);
     validateFieldTypes([username, password], [String, String]);
-    result = await requestManager.loginUser(username, password)
-    res.status(200).json(result);
+    const token = await requestManager.loginUser(username, password)
+    res.status(200).json({
+      message: "Login successful.",
+      authorization: "Bearer " + token
+    });
   }catch(err){
       handleError(err);
       console.log(err.message);

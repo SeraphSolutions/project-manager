@@ -24,5 +24,7 @@ describe('GET /user/login', () => {
       .send({username: 'TestUser1', password: 'TestPassword1'});
       
       expect(response.status).toBe(200);
+      expect(response.body.message).toBe("Login successful.");
+      expect(response.body.authorization).toBeDefined();
     });
   });
