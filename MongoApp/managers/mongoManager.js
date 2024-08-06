@@ -79,6 +79,14 @@ async function assignToTask(userId, taskId){
   );
 }
 
+async function unassignToTask(userId, taskId){
+  collection = await client.db("project_manager").collection("User");
+  const result = await collection.updateOne(
+    { _id: new ObjectId(userId)},
+    { $pull: { assignedTasks: new ObjectId(taskId) } }
+  );
+}
+
 //#endregion
 
 //#region Task Functions
@@ -104,4 +112,4 @@ async function addTask(userId, title, description, deadline){
 
 //#endregion
 
-module.exports = {addUser, getUser, getAllUsers, addTask, getTask, assignToTask, isTaskOwner, hasAccessToTask}
+module.exports = {addUser, getUser, getAllUsers, addTask, getTask, assignToTask, unassignToTask, isTaskOwner, hasAccessToTask}

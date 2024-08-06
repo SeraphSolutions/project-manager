@@ -59,6 +59,16 @@ async function assignUserToTask(token, userToAssign, taskId){
     const userId = await mongoManager.getUser(userToAssign);
     await mongoManager.assignToTask(userId._id, taskId);
 }
+
+async function unassignUserToTask(token, userToAssign, taskId){
+    const isOwner = await mongoManager.isTaskOwner(token.userId, taskId);
+    if(!isOwner){
+        throwError(401);
+    }
+    const userId = await mongoManager.getUser(userToAssign);
+    await mongoManager.unassignToTask(userId._id, taskId);
+}
+
 //#endregion
 
 //#endregion
@@ -81,4 +91,4 @@ async function createTask(token, title, description, deadline){
 }
 
 //#endregion
-module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, getTask, assignUserToTask}
+module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, getTask, assignUserToTask, unassignUserToTask}

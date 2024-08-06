@@ -81,6 +81,21 @@ router.get('/:username/assign/:taskId', auth, async (req, res) => {
     }
 })
 
+//Unassign User to task
+router.get('/:username/unassign/:taskId', auth, async (req, res) => {
+  try{
+    const {taskId, username} = req.params;
+    if(!username || !taskId){
+      throwError(400)
+    }
+    result = await requestManager.unassignUserToTask(req.userData, username, taskId);
+    res.status(200).json(result);
+  }catch(err){
+      handleError(err);
+      res.status(err.statusCode).json(err.message);
+    }
+})
+
 
 
 
