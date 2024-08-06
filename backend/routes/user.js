@@ -1,6 +1,6 @@
 const requestManager = require('../managers/requestManager');
 const { handleError } = require('../managers/errorManager');
-const { validateNullFields, validateFieldTypes } = require('../managers/validationManager');
+const { validateUsername, validatePassword, handleValidationErrors } = require('../managers/validationManager');
 const {auth} = require('../managers/tokenManager')
 
 const express = require('express');
@@ -9,11 +9,13 @@ const router = express.Router();
 router.use(express.json());
 
 //Create User
-router.post('/register', async (req, res) => {
+router.post('/register',
+  validateUsername,
+  validatePassword,
+  handleValidationErrors,
+  async (req, res) => {
   try{
     const {username, password} = req.body;
-    validateNullFields([username, password]);
-    validateFieldTypes([username, password], [String, String]);
     result = await requestManager.createUser(username, password)
     res.status(201).json({
       message: 'Created.'
@@ -21,16 +23,19 @@ router.post('/register', async (req, res) => {
   }
   catch(err){
     handleError(err);
-    res.status(err.statusCode).json(err);
+    res.status(err.statusCode).json({
+      message: 'Bad request.'
+    });
   }
 })
 
 //Login user
-router.get('/login', async (req, res) => {
+router.get('/login',
+  validateUsername,
+  validatePassword,
+  handleValidationErrors, async (req, res) => {
   try{
     const {username, password} = req.body;
-    validateNullFields([username, password]);
-    validateFieldTypes([username, password], [String, String]);
     const token = await requestManager.loginUser(username, password)
     res.status(200).json({
       message: "Login successful.",

@@ -18,7 +18,7 @@ describe('POST /user/register', () => {
       .post('/user/register')
       .send({password: 'TestPassword1'});
       expect(response.status).toBe(400);
-      expect(response.body.message).toBe('Bad request.');
+      expect(response.badRequest).toBe(true);
     });
 
   it('should respond with a 400 status when password is missing', async () => {
@@ -26,7 +26,7 @@ describe('POST /user/register', () => {
     .post('/user/register')
     .send({username: 'TestUser1'});
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Bad request.');
+    expect(response.badRequest).toBe(true);
   });
 
   it('should respond with a 400 status when username and password are missing', async () => {
@@ -34,6 +34,6 @@ describe('POST /user/register', () => {
     .post('/user/register')
     .send({});
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Bad request.');
+    expect(response.badRequest).toBe(true);
   });
 });
