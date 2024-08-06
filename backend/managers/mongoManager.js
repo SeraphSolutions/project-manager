@@ -1,5 +1,7 @@
 const { MongoClient, ServerApiVersion, ObjectId} = require('mongodb');
-const uri = "mongodb+srv://santiagopapa:s3rwpw8r9@seraph.9kcw72x.mongodb.net/?retryWrites=true&w=majority&appName=seraph";
+const dotenv = require('dotenv')
+dotenv.config({path:__dirname+'/../.env'})
+const uri = process.env.MONGO_URI;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -48,7 +50,7 @@ async function isTaskOwner(userId, taskId){
 
 async function addUser(username, hashedPassword){
     collection = await client.db("project_manager").collection("User");
-    await collection.insertOne({
+    return await collection.insertOne({
       username: username,   
       hashedPassword: hashedPassword,
       isAdmin: false,
@@ -87,6 +89,21 @@ async function unassignToTask(userId, taskId){
   );
 }
 
+async function makeUserAdmin(userId) {
+    const result = await collection.updateOne(
+      { _id: new ObjectId(userId) },
+      {
+        $set: { isAdmin: true }
+      });
+}
+
+async function deleteUser(userId) {
+  collection = await client.db("project_manager").collection("User");
+  const result = await collection.deleteOne(
+    { _id: userId }
+  );
+}
+
 //#endregion
 
 //#region Task Functions
@@ -120,4 +137,4 @@ async function updateTask(taskId, field, value){
 
 //#endregion
 
-module.exports = {addUser, getUser, getAllUsers, addTask, getTask, assignToTask, unassignToTask, isTaskOwner, hasAccessToTask}
+module.exports = {addUser, getUser, getAllUsers, addTask, getTask, assignToTask, unassignToTask, isTaskOwner, hasAccessToTask, makeUserAdmin, deleteUser}

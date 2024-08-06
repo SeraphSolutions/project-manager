@@ -12,8 +12,9 @@ async function createUser(username, password){
         throwError(409);
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    mongoManager.addUser(username, hashedPassword);
+    await mongoManager.addUser(username, hashedPassword);
 }
+
 async function loginUser(username, password){
     const user = await mongoManager.getUser(username);
     if(user == null){
@@ -90,11 +91,10 @@ async function createTask(token, title, description, deadline){
     return taskId;
 }
 
-async function updateTask(token, taskId, field, value){
-    const taskId = await mongoManager.addTask(token.userId, title, description, deadline);
-    await mongoManager.assignToTask(token.userId, taskId);
-    return taskId;
-}
+// async function updateTask(token, taskId){
+//     const taskId = await mongoManager.addTask(token.userId, title, description, deadline);
+//     return await mongoManager.assignToTask(token.userId, taskId);
+// }
 
 //#endregion
-module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, getTask, assignUserToTask, unassignUserToTask, updateTask}
+module.exports = {createUser, loginUser, getUser, getAllUsers, createTask, getTask, assignUserToTask, unassignUserToTask,}

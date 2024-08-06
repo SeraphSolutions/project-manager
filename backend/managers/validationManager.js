@@ -1,7 +1,7 @@
 const { throwError } = require('../managers/errorManager');
 
 function validateNullFields(fields){
-    (typeof(fields) == Array) ? {} : throwError(500);    
+    (fields instanceof Array) ? {} : throwError(500);    
     fields.forEach((field) => {
         if(!field){
             throwError(400);
@@ -18,7 +18,7 @@ function validateFieldTypes(fields, fieldTypes){
             (isNaN(Number(field)) || !Number.isInteger(Number(field))) ? throwError(400) : {};
         }
         else if(fieldTypes[index] == String){
-            (field instanceof String) ? {} : throwError(400);
+            (typeof(field) == 'string') ? {} : throwError(400);
         }
         else if(fieldTypes[index] == Date){
             (new Date(field) instanceof Date && !isNaN(myDate)) ? {} : throwError(400)

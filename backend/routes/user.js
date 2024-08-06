@@ -1,9 +1,10 @@
 const requestManager = require('../managers/requestManager');
-const { handleError, throwError } = require('../managers/errorManager');
+const { handleError } = require('../managers/errorManager');
 const { validateNullFields, validateFieldTypes, validateFieldValueType } = require('../managers/validationManager');
 const {auth} = require('../managers/tokenManager')
 
 const express = require('express');
+const { route } = require('./task');
 const router = express.Router();
 router.use(express.json());
 
@@ -12,13 +13,13 @@ router.post('/register', async (req, res) => {
   try{
     const {username, password} = req.body;
     validateNullFields([username, password]);
-    validateFieldTypes([username, password], [String, String]);
+    // validateFieldTypes([username, password], [String, String]);
     result = await requestManager.createUser(username, password)
-    res.status(201).json(result);
+    res.status(201).json({message: 'Created.'});
   }
   catch(err){
     handleError(err);
-    res.status(err.statusCode).json(err.message);
+    res.status(err.statusCode).json(err);
   }
 })
 
@@ -32,7 +33,8 @@ router.get('/login', async (req, res) => {
     res.status(200).json(result);
   }catch(err){
       handleError(err);
-      res.status(err.statusCode).json(err.message);
+      console.log(err.message);
+      res.status(err.statusCode).json(err);
     }
 })
 
@@ -92,7 +94,19 @@ router.get('/:username/unassign/:taskId', auth, async (req, res) => {
     }
 })
 
-
-
+//Delete User
+router.delete('/:username', async (req, res) => {
+  try{
+    const {username} = req.body;
+    validateNullFields([username]);
+    // validateFieldTypes([username, password], [String, String]);
+    result = await requestManager.createUser(username, password)
+    res.status(201).json({message: 'Created.'});
+  }
+  catch(err){
+    handleError(err);
+    res.status(err.statusCode).json(err);
+  }
+})
 
 module.exports = router;
